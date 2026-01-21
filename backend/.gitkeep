@@ -1,0 +1,12 @@
+# Backend Folder
+
+This folder will contain backend services and APIs for the ISP support system.
+
+## Planned Services:
+- Authentication service
+- Ticket management API
+- Knowledge base API
+- Notification service
+- Analytics service
+- Device management API
+- Billing integration service
