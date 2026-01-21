@@ -4,7 +4,7 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
-/* ISP Support System Design System */
+/* Neo-Glass Tech Design System */
 
 @layer base {
   :root {
@@ -55,19 +55,19 @@
     --chat-system-bg: 210 20% 96%;
 
     /* Gradient definitions */
-    --gradient-primary: linear-gradient(135deg, hsl(210, 100%, 45%), hsl(210, 100%, 35%));
-    --gradient-accent: linear-gradient(135deg, hsl(175, 65%, 45%), hsl(175, 65%, 35%));
-    --gradient-hero: linear-gradient(135deg, hsl(210, 100%, 20%), hsl(210, 80%, 30%));
+    --gradient-primary: linear-gradient(135deg, #3B82F6, #2563EB);
+    --gradient-accent: linear-gradient(135deg, #22D3EE, #06B6D4);
+    --gradient-hero: linear-gradient(135deg, #0F172A, #1E293B);
     --gradient-glass: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
-    --gradient-diagnostic: linear-gradient(90deg, hsl(175, 65%, 45%), hsl(210, 100%, 45%));
+    --gradient-diagnostic: linear-gradient(90deg, #22D3EE, #3B82F6);
 
     /* Shadow definitions */
-    --shadow-sm: 0 1px 2px 0 hsl(220 30% 15% / 0.05);
-    --shadow-md: 0 4px 6px -1px hsl(220 30% 15% / 0.1), 0 2px 4px -2px hsl(220 30% 15% / 0.1);
-    --shadow-lg: 0 10px 15px -3px hsl(220 30% 15% / 0.1), 0 4px 6px -4px hsl(220 30% 15% / 0.1);
-    --shadow-xl: 0 20px 25px -5px hsl(220 30% 15% / 0.1), 0 8px 10px -6px hsl(220 30% 15% / 0.1);
-    --shadow-glow: 0 0 20px hsl(210 100% 45% / 0.3);
-    --shadow-glow-accent: 0 0 20px hsl(175 65% 45% / 0.3);
+    --shadow-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.08), 0 2px 4px -2px rgba(15, 23, 42, 0.05);
+    --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.05);
+    --shadow-xl: 0 20px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.05);
+    --shadow-glow: 0 0 20px rgba(59, 130, 246, 0.3);
+    --shadow-glow-accent: 0 0 20px rgba(34, 211, 238, 0.3);
 
     /* Sidebar tokens */
     --sidebar-background: 220 30% 15%;
@@ -81,13 +81,13 @@
   }
 
   .dark {
-    --background: 220 30% 8%;
+    --background: 220 15% 4%;
     --foreground: 0 0% 95%;
 
-    --card: 220 30% 12%;
+    --card: 220 20% 9%;
     --card-foreground: 0 0% 95%;
 
-    --popover: 220 30% 12%;
+    --popover: 220 20% 9%;
     --popover-foreground: 0 0% 95%;
 
     --primary: 210 100% 55%;
@@ -96,7 +96,7 @@
     --secondary: 175 65% 50%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 220 30% 18%;
+    --muted: 220 15% 15%;
     --muted-foreground: 215 20% 65%;
 
     --accent: 175 65% 50%;
@@ -111,13 +111,13 @@
     --warning: 38 92% 55%;
     --warning-foreground: 0 0% 100%;
 
-    --border: 220 30% 20%;
-    --input: 220 30% 20%;
+    --border: 220 15% 12%;
+    --input: 220 15% 12%;
     --ring: 210 100% 55%;
 
     --chat-user-bg: 210 100% 50%;
-    --chat-agent-bg: 220 30% 15%;
-    --chat-system-bg: 220 30% 12%;
+    --chat-agent-bg: 220 20% 9%;
+    --chat-system-bg: 220 20% 7%;
   }
 }
 
@@ -199,8 +199,8 @@
   }
 
   @keyframes pulse-glow {
-    0%, 100% { box-shadow: 0 0 5px hsl(var(--primary) / 0.3); }
-    50% { box-shadow: 0 0 20px hsl(var(--primary) / 0.6); }
+    0%, 100% { box-shadow: 0 0 5px rgba(59, 130, 246, 0.3); }
+    50% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.6); }
   }
 
   /* Diagnostic progress animation */
