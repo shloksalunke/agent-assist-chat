@@ -89,6 +89,10 @@ export default {
       boxShadow: {
         glow: "var(--shadow-glow)",
         "glow-accent": "var(--shadow-glow-accent)",
+        "neo-sm": "0 1px 2px 0 rgba(15, 23, 42, 0.05)",
+        "neo-md": "0 4px 6px -1px rgba(15, 23, 42, 0.08), 0 2px 4px -2px rgba(15, 23, 42, 0.05)",
+        "neo-lg": "0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.05)",
+        "neo-xl": "0 20px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.05)",
       },
       keyframes: {
         "accordion-down": {
@@ -123,6 +127,10 @@ export default {
           from: { width: "0%" },
           to: { width: "100%" },
         },
+        "glow-pulse": {
+          "0%, 100%": { boxShadow: "0 0 5px rgba(59, 130, 246, 0.3)" },
+          "50%": { boxShadow: "0 0 20px rgba(59, 130, 246, 0.6)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -133,6 +141,7 @@ export default {
         "scale-in": "scale-in 0.2s ease-out",
         "pulse-soft": "pulse-soft 2s ease-in-out infinite",
         "progress-fill": "progress-fill 2s ease-out",
+        "glow-pulse": "glow-pulse 2s ease-in-out infinite",
       },
     },
   },
