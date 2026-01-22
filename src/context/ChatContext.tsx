@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
 import type { Message, TroubleshootingStep, Ticket, DiagnosticResult, IntentCategory } from '@/types/support';
 import { v4 } from '@/lib/utils';
-import { classifyIntent, searchKnowledgeBase, getOSSpecificInstructions } from '@/services/knowledgeBase';
 import { runFullDiagnostics, analyzeResults } from '@/services/diagnostics';
 import { createTicket, updateTicketStatus, addAgentAction, addDiagnosticResults, escalateTicket, closeTicket } from '@/services/ticketService';
 import { useAuth } from './AuthContext';
@@ -73,204 +72,75 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const sendMessage = useCallback(async (content: string) => {
     if (!user || !mcpContext) return;
 
-    // Add user message
+    // Add user message locally
     addMessage({ role: 'user', content });
 
-    // Initial greeting or first message
-    if (currentPhase === 'initial') {
-      // Process intent
-      const { intent, confidence } = await classifyIntent(content);
-      setCurrentIntent(intent);
-      console.log('[NLP] Classified intent:', intent, 'confidence:', confidence);
-
-      if (intent === 'unknown' || confidence < 0.5) {
-        await addAgentMessage(
-          "I'd like to help you with your issue. Could you please describe the problem you're experiencing in more detail? For example:\n\n• No internet connection\n• Slow internet speed\n• WiFi not working\n• Device can't connect"
-        );
+    // If we are currently asking for resolution, interpret yes/no locally
+    if (currentPhase === 'resolution_check') {
+      const lower = content.toLowerCase();
+      if (lower.includes('yes') || lower.includes('fixed') || lower.includes('working') || lower.includes('resolve') || lower.includes('done')) {
+        // Close conversation
+        addSystemMessage('✅ Issue marked as resolved');
+        setCurrentPhase('closed');
         return;
       }
 
-      // Search knowledge base
-      const article = await searchKnowledgeBase(intent);
-      
-      if (article) {
-        // Create ticket in background
-        const ticket = await createTicket(user.id, intent, content);
-        setCurrentTicket(ticket);
-        await addAgentAction(ticket.id, {
-          agentType: 'conversational',
-          action: 'Intent classified and knowledge base article found',
-          result: `Intent: ${intent}, Article: ${article.title}`,
-          success: true,
-        });
-
-        // Prepare OS-specific steps
-        const osSteps = article.steps.map(step => ({
-          ...step,
-          description: getOSSpecificInstructions(user.deviceOS, step),
-        }));
-        setCurrentSteps(osSteps);
-        setCurrentPhase('troubleshooting');
-
-        await addAgentMessage(
-          `I understand you're having **${article.title.toLowerCase()}** issues. I'll guide you through some troubleshooting steps that should help resolve this.\n\nI've detected you're using **${user.deviceOS}**, so I'll provide specific instructions for your system.\n\nPlease follow these steps one by one and mark each as complete when you're done:`,
-          {
-            intent,
-            confidence,
-            troubleshootingSteps: osSteps,
-          }
-        );
-      } else {
-        await addAgentMessage(
-          "I'm analyzing your issue. Let me gather some information to help you better. Could you tell me more about when this problem started and what you were doing when it occurred?"
-        );
+      if (lower.includes('no') || lower.includes('still') || lower.includes('not working') || lower.includes('problem')) {
+        // Allow user to continue explaining the issue
+        setCurrentPhase('initial');
+        return;
       }
-      return;
     }
 
-    // Handle follow-up messages during troubleshooting
-    if (currentPhase === 'troubleshooting') {
-      const lowerContent = content.toLowerCase();
-      
-      if (lowerContent.includes('done') || lowerContent.includes('finished') || lowerContent.includes('completed all')) {
-        // Check if all steps are marked complete
-        const allComplete = currentSteps.every(s => s.completed);
-        
-        if (allComplete) {
-          setCurrentPhase('resolution_check');
-          await addAgentMessage(
-            "Great job completing all the troubleshooting steps! 🎉\n\n**Is your issue resolved now?**\n\nPlease let me know so I can either close this case or escalate to our advanced diagnostic tools.",
-            { requiresAction: true, actionType: 'resolution_check' }
-          );
+    // For all other phases: send the user's message to the backend LLM endpoint
+    setIsTyping(true);
+    try {
+      const resp = await fetch('http://localhost:8000/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: content }),
+      });
+
+      if (!resp.ok) {
+        const text = await resp.text();
+        await addAgentMessage(`Error from server: ${text}`);
+        return;
+      }
+
+      const json = await resp.json();
+
+      // Extract the actual response text from the JSON instead of showing raw JSON
+      let responseText = "";
+      if (typeof json === 'object' && json !== null) {
+        // Try common response fields
+        if (typeof json.reply === 'string') {
+          responseText = json.reply;
+        } else if (typeof json.response === 'string') {
+          responseText = json.response;
+        } else if (typeof json.answer === 'string') {
+          responseText = json.answer;
         } else {
-          await addAgentMessage(
-            "It looks like not all steps are marked as complete yet. Please make sure to check off each step as you complete it, then let me know when you're done."
-          );
+          // If no recognizable field, stringify the whole object but format it nicely
+          responseText = JSON.stringify(json, null, 2);
         }
-      } else if (lowerContent.includes('help') || lowerContent.includes('stuck') || lowerContent.includes("don't understand")) {
-        await addAgentMessage(
-          "I'm here to help! If you're stuck on a particular step, let me know which one and I can provide more detailed guidance. You can also click the step to see the full instructions."
-        );
-      } else if (lowerContent.includes('yes') || lowerContent.includes('fixed') || lowerContent.includes('working')) {
-        // User indicates issue is resolved
+      } else {
+        // If response is already a string
+        responseText = String(json);
+      }
+
+      // Display the formatted response text
+      await addAgentMessage(responseText);
+
+      // After LLM response, ask only for resolution feedback if not already in a special phase
+      if (currentPhase !== 'system_access' && currentPhase !== 'diagnostics' && currentPhase !== 'feedback' && currentPhase !== 'escalated' && currentPhase !== 'closed') {
         setCurrentPhase('resolution_check');
-        await addAgentMessage(
-          "**Is your issue resolved now?**\n\nPlease confirm so I can either close this case or escalate to our advanced diagnostic tools.",
-          { requiresAction: true, actionType: 'resolution_check' }
-        );
-      } else {
-        // Try to interpret user's issue and provide relevant guidance
-        const { intent: followUpIntent } = await classifyIntent(content);
-        
-        if (followUpIntent !== 'unknown') {
-          const article = await searchKnowledgeBase(followUpIntent);
-          if (article) {
-            await addAgentMessage(
-              `I see you're also experiencing **${article.title.toLowerCase()}** issues. Let me adjust the troubleshooting steps accordingly.`
-            );
-            
-            // Update steps with new article
-            const osSteps = article.steps.map(step => ({
-              ...step,
-              description: getOSSpecificInstructions(user.deviceOS, step),
-            }));
-            setCurrentSteps(osSteps);
-            
-            await addAgentMessage(
-              `Here are updated steps for **${article.title}**:\n\nPlease follow these steps one by one:`,
-              { troubleshootingSteps: osSteps }
-            );
-          } else {
-            await addAgentMessage(
-              "I'm focusing on helping you with the original issue. Please let me know if you've completed the troubleshooting steps I provided, or if you're still experiencing problems."
-            );
-          }
-        } else {
-          await addAgentMessage(
-            "I'm here while you work through the steps. Mark each step as complete when you finish it. If you need clarification on any step, just ask!\n\nHave you completed all the troubleshooting steps I provided?"
-          );
-        }
+        await addAgentMessage('Is your issue resolved? (Yes / No)', { requiresAction: true, actionType: 'resolution_check' });
       }
-      return;
+    } catch (err: any) {
+      await addAgentMessage(`Failed to contact backend: ${err?.message || String(err)}`);
+    } finally {
+      setIsTyping(false);
     }
-
-    // Handle messages during resolution check
-    if (currentPhase === 'resolution_check') {
-      const lowerContent = content.toLowerCase();
-      
-      if (lowerContent.includes('yes') || lowerContent.includes('fixed') || lowerContent.includes('working') || 
-          lowerContent.includes('resolve') || lowerContent.includes('done')) {
-        // Issue resolved - close ticket and show feedback
-        if (currentTicket) {
-          await updateTicketStatus(currentTicket.id, 'resolved');
-          await addAgentAction(currentTicket.id, {
-            agentType: 'conversational',
-            action: 'User confirmed issue resolved via self-help',
-            success: true,
-          });
-        }
-
-        addSystemMessage('✅ Issue marked as resolved');
-        setCurrentPhase('feedback');
-        
-        await addAgentMessage(
-          "Wonderful! I'm glad we could resolve your issue through the troubleshooting steps. 🎉\n\nBefore we close this case, would you mind sharing your feedback? It helps us improve our support service.",
-          { requiresAction: true, actionType: 'feedback' }
-        );
-      } else if (lowerContent.includes('no') || lowerContent.includes('still') || lowerContent.includes('not working') ||
-                 lowerContent.includes('issue') || lowerContent.includes('problem')) {
-        // Issue not resolved - request system access for diagnostics
-        if (currentTicket) {
-          await addAgentAction(currentTicket.id, {
-            agentType: 'conversational',
-            action: 'Self-help unsuccessful, initiating diagnostic agent',
-            success: true,
-          });
-        }
-
-        setCurrentPhase('system_access');
-        setActiveAgent('diagnostic');
-        
-        await addAgentMessage(
-          "I'm sorry the troubleshooting steps didn't resolve your issue. Let me switch to our **Autonomous Diagnostic Agent** which can perform a deeper analysis of your connection.\n\nTo do this, I'll need temporary access to run diagnostic tests on your network. This is completely safe and secure.",
-          { requiresAction: true, actionType: 'system_access' }
-        );
-      } else {
-        await addAgentMessage(
-          "I'm checking if your issue is resolved. Please confirm with a simple 'yes' if it's fixed, or 'no' if you're still having problems."
-        );
-      }
-      return;
-    }
-
-    // Handle messages during diagnostics
-    if (currentPhase === 'diagnostics') {
-      await addAgentMessage(
-        "The diagnostic scan is currently running. Please wait while I analyze your connection. This usually takes 2-3 minutes."
-      );
-      return;
-    }
-
-    // Handle messages during feedback
-    if (currentPhase === 'feedback') {
-      await addAgentMessage(
-        "Thank you for your patience! Please rate your experience using the form above so we can continue to improve our service."
-      );
-      return;
-    }
-
-    // Handle messages during escalated phase
-    if (currentPhase === 'escalated') {
-      await addAgentMessage(
-        "Your case has been escalated to our human support team. An engineer will respond to you shortly. Is there anything else you'd like to add to your case?"
-      );
-      return;
-    }
-
-    // Default response for any other situation
-    await addAgentMessage(
-      "I'm here to help! Could you please describe the issue you're experiencing with your internet connection?"
-    );
   }, [user, mcpContext, currentPhase, currentSteps, currentTicket, addMessage, addAgentMessage, addSystemMessage, setActiveAgent]);
 
   const markStepComplete = useCallback((stepId: string) => {
@@ -411,9 +281,42 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     if (user && mcpContext && messages.length === 0) {
       const greeting = async () => {
         await new Promise(resolve => setTimeout(resolve, 500));
-        await addAgentMessage(
-          `Hello ${user.name}! 👋\n\nI'm your ISP Connect support assistant. I can help you with:\n\n• Internet connectivity issues\n• Slow speed problems\n• Router and WiFi troubleshooting\n• Device connection help\n\n**How can I assist you today?**`
-        );
+
+        try {
+          const resp = await fetch('http://localhost:8000/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: `Hello ${user.name}, please reply with a short friendly support assistant greeting.` }),
+          });
+
+          if (!resp.ok) {
+            const text = await resp.text();
+            await addAgentMessage(`Error fetching greeting: ${text}`);
+            return;
+          }
+
+          const json = await resp.json();
+          
+          // Extract the actual response text from the JSON
+          let greetingText = "";
+          if (typeof json === 'object' && json !== null) {
+            if (typeof json.reply === 'string') {
+              greetingText = json.reply;
+            } else if (typeof json.response === 'string') {
+              greetingText = json.response;
+            } else if (typeof json.answer === 'string') {
+              greetingText = json.answer;
+            } else {
+              greetingText = JSON.stringify(json, null, 2);
+            }
+          } else {
+            greetingText = String(json);
+          }
+          
+          await addAgentMessage(greetingText);
+        } catch (err: any) {
+          await addAgentMessage(`Unable to reach backend for greeting: ${err?.message || String(err)}`);
+        }
       };
       greeting();
     }

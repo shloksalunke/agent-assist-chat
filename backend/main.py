@@ -2,6 +2,8 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import requests
 from fastapi.middleware.cors import CORSMiddleware
+import logging
+from typing import Any
 
 app = FastAPI(
     title="Local LLM API",
@@ -44,14 +46,56 @@ def chat(req: ChatRequest):
 
     try:
         r = requests.post(OLLAMA_URL, json=payload, timeout=120)
-        r.raise_for_status()
+        # raise for non-2xx status codes
+        try:
+            r.raise_for_status()
+        except requests.exceptions.RequestException as upstream_err:
+            logging.error("Ollama returned non-2xx: %s %s", r.status_code, r.text)
+            raise HTTPException(status_code=502, detail=f"Upstream LLM error: {upstream_err}")
 
-        answer = r.json().get("response", "")
+        # parse json safely
+        try:
+            data: Any = r.json()
+        except ValueError as ve:
+            logging.error("Failed to parse JSON from Ollama: %s", r.text)
+            raise HTTPException(status_code=502, detail=f"Invalid JSON from LLM: {ve}")
+
+        # Try common response shapes from local LLM proxies
+        reply = ""
+        if isinstance(data, dict):
+            # common key used earlier
+            if "response" in data and isinstance(data.get("response"), str):
+                reply = data.get("response")
+            # some LLM proxies return results array
+            elif "results" in data and isinstance(data.get("results"), list) and len(data.get("results")) > 0:
+                first = data.get("results")[0]
+                if isinstance(first, dict):
+                    # try a few plausible keys
+                    reply = first.get("content") or first.get("output") or first.get("text") or first.get("response", "")
+                else:
+                    reply = str(first)
+            # some endpoints use 'output' or 'answer'
+            elif "output" in data:
+                reply = str(data.get("output"))
+            elif "answer" in data:
+                reply = str(data.get("answer"))
+            else:
+                # fallback to stringifying whole payload
+                reply = str(data)
+        else:
+            reply = str(data)
 
         return {
             "success": True,
-            "reply": answer
+            "reply": reply
         }
 
+    except requests.exceptions.RequestException as e:
+        logging.exception("Network error when contacting Ollama: %s", e)
+        raise HTTPException(status_code=502, detail=f"Failed to contact LLM: {e}")
+    except HTTPException:
+        # re-raise HTTPExceptions we intentionally raised above
+        raise
     except Exception as e:
+        logging.exception("Unexpected error in /api/chat: %s", e)
         raise HTTPException(status_code=500, detail=str(e))
