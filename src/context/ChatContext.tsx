@@ -1,9 +1,10 @@
 import React, { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
-import type { Message, TroubleshootingStep, Ticket, DiagnosticResult, IntentCategory } from '@/types/support';
+import type { Message, TroubleshootingStep, Ticket, DiagnosticResult, IntentCategory, KnowledgeBaseArticle } from '@/types/support';
 import { v4 } from '@/lib/utils';
 import { runFullDiagnostics, analyzeResults } from '@/services/diagnostics';
 import { createTicket, updateTicketStatus, addAgentAction, addDiagnosticResults, escalateTicket, closeTicket } from '@/services/ticketService';
 import { useAuth } from './AuthContext';
+import { classifyIntent, searchKnowledgeBase, getOSSpecificInstructions } from '@/services/knowledgeBase';
 
 type ChatPhase = 'initial' | 'troubleshooting' | 'resolution_check' | 'system_access' | 'diagnostics' | 'feedback' | 'escalated' | 'closed';
 
@@ -36,6 +37,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [diagnosticResults, setDiagnosticResults] = useState<DiagnosticResult[]>([]);
   const [diagnosticProgress, setDiagnosticProgress] = useState<Record<string, number>>({});
   const [currentIntent, setCurrentIntent] = useState<IntentCategory | null>(null);
+  const [knowledgeBaseArticle, setKnowledgeBaseArticle] = useState<KnowledgeBaseArticle | null>(null);
 
   const addMessage = useCallback((message: Omit<Message, 'id' | 'timestamp'>) => {
     const fullMessage: Message = {
@@ -75,71 +77,89 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     // Add user message locally
     addMessage({ role: 'user', content });
 
-    // If we are currently asking for resolution, interpret yes/no locally
-    if (currentPhase === 'resolution_check') {
+    // Handle different phases
+    if (currentPhase === 'initial') {
+      // Classify user intent
+      const { intent } = await classifyIntent(content);
+      setCurrentIntent(intent);
+      
+      // Search knowledge base for relevant article
+      const article = await searchKnowledgeBase(intent);
+      
+      if (article) {
+        setKnowledgeBaseArticle(article);
+        setCurrentSteps(article.steps);
+        setCurrentPhase('troubleshooting');
+        
+        // Create a ticket for this issue
+        const ticket = await createTicket(user.id, intent, content);
+        setCurrentTicket(ticket);
+        
+        await addAgentMessage(
+          `I understand you're having an issue with ${article.title.toLowerCase()}. Please follow the troubleshooting steps shown below and mark each step as complete.`
+        );
+      } else {
+        await addAgentMessage(
+          "I'm not sure I understand your issue. Could you please describe your internet problem in more detail? For example:\n\n" +
+          "• My internet is not working\n" +
+          "• The speed is very slow\n" +
+          "• My device won't connect to WiFi"
+        );
+      }
+    } 
+    else if (currentPhase === 'resolution_check') {
       const lower = content.toLowerCase();
       if (lower.includes('yes') || lower.includes('fixed') || lower.includes('working') || lower.includes('resolve') || lower.includes('done')) {
-        // Close conversation
-        addSystemMessage('✅ Issue marked as resolved');
-        setCurrentPhase('closed');
-        return;
-      }
+        // Issue resolved - close ticket and show feedback
+        if (currentTicket) {
+          await updateTicketStatus(currentTicket.id, 'resolved');
+          await addAgentAction(currentTicket.id, {
+            agentType: 'conversational',
+            action: 'User confirmed issue resolved via self-help',
+            success: true,
+          });
+        }
 
-      if (lower.includes('no') || lower.includes('still') || lower.includes('not working') || lower.includes('problem')) {
-        // Allow user to continue explaining the issue
-        setCurrentPhase('initial');
-        return;
+        addSystemMessage('✅ Issue marked as resolved');
+        setCurrentPhase('feedback');
+        
+        await addAgentMessage(
+          "Wonderful! I'm glad we could resolve your issue through the troubleshooting steps. 🎉\n\nBefore we close this case, would you mind sharing your feedback? It helps us improve our support service.",
+          { requiresAction: true, actionType: 'feedback' }
+        );
+      } else if (lower.includes('no') || lower.includes('still') || lower.includes('not working') || lower.includes('problem')) {
+        // Issue not resolved - request system access for diagnostics
+        if (currentTicket) {
+          await addAgentAction(currentTicket.id, {
+            agentType: 'conversational',
+            action: 'Self-help unsuccessful, initiating diagnostic agent',
+            success: true,
+          });
+        }
+
+        setCurrentPhase('system_access');
+        setActiveAgent('diagnostic');
+        
+        await addAgentMessage(
+          "I'm sorry the troubleshooting steps didn't resolve your issue. Let me switch to our **Autonomous Diagnostic Agent** which can perform a deeper analysis of your connection.\n\nTo do this, I'll need temporary access to run diagnostic tests on your network. This is completely safe and secure.",
+          { requiresAction: true, actionType: 'system_access' }
+        );
+      } else {
+        // User provided additional information instead of yes/no
+        await addAgentMessage(
+          "I'm checking if your issue is resolved. Please answer with either:\n\n• Yes (if your issue is fixed)\n• No (if you're still experiencing problems)"
+        );
       }
     }
-
-    // For all other phases: send the user's message to the backend LLM endpoint
-    setIsTyping(true);
-    try {
-      const resp = await fetch('http://localhost:8000/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: content }),
-      });
-
-      if (!resp.ok) {
-        const text = await resp.text();
-        await addAgentMessage(`Error from server: ${text}`);
-        return;
-      }
-
-      const json = await resp.json();
-
-      // Extract the actual response text from the JSON instead of showing raw JSON
-      let responseText = "";
-      if (typeof json === 'object' && json !== null) {
-        // Try common response fields
-        if (typeof json.reply === 'string') {
-          responseText = json.reply;
-        } else if (typeof json.response === 'string') {
-          responseText = json.response;
-        } else if (typeof json.answer === 'string') {
-          responseText = json.answer;
-        } else {
-          // If no recognizable field, stringify the whole object but format it nicely
-          responseText = JSON.stringify(json, null, 2);
-        }
-      } else {
-        // If response is already a string
-        responseText = String(json);
-      }
-
-      // Display the formatted response text
-      await addAgentMessage(responseText);
-
-      // After LLM response, ask only for resolution feedback if not already in a special phase
-      if (currentPhase !== 'system_access' && currentPhase !== 'diagnostics' && currentPhase !== 'feedback' && currentPhase !== 'escalated' && currentPhase !== 'closed') {
-        setCurrentPhase('resolution_check');
-        await addAgentMessage('Is your issue resolved? (Yes / No)', { requiresAction: true, actionType: 'resolution_check' });
-      }
-    } catch (err: any) {
-      await addAgentMessage(`Failed to contact backend: ${err?.message || String(err)}`);
-    } finally {
-      setIsTyping(false);
+    else if (currentPhase === 'troubleshooting') {
+      // During troubleshooting, guide user to complete steps
+      await addAgentMessage(
+        "Please follow the troubleshooting steps shown below and mark each step as complete. Let me know if you need clarification on any step."
+      );
+    }
+    else {
+      // Default response for other phases
+      await addAgentMessage("How can I assist you further with your internet connection issue?");
     }
   }, [user, mcpContext, currentPhase, currentSteps, currentTicket, addMessage, addAgentMessage, addSystemMessage, setActiveAgent]);
 
@@ -149,7 +169,24 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         step.id === stepId ? { ...step, completed: true } : step
       )
     );
-  }, []);
+    
+    // Check if all steps are completed
+    const updatedSteps = currentSteps.map(step => 
+      step.id === stepId ? { ...step, completed: true } : step
+    );
+    
+    const allCompleted = updatedSteps.every(step => step.completed);
+    
+    if (allCompleted && currentPhase === 'troubleshooting') {
+      setCurrentPhase('resolution_check');
+      addMessage({
+        role: 'agent',
+        content: 'Have you completed all the troubleshooting steps? Is your issue resolved?',
+        agentType: mcpContext?.agentOrchestration.activeAgent || 'conversational',
+        metadata: { requiresAction: true, actionType: 'resolution_check' }
+      });
+    }
+  }, [currentSteps, currentPhase, addMessage, mcpContext]);
 
   const confirmResolution = useCallback(async (resolved: boolean) => {
     if (!currentTicket) return;
@@ -281,42 +318,9 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     if (user && mcpContext && messages.length === 0) {
       const greeting = async () => {
         await new Promise(resolve => setTimeout(resolve, 500));
-
-        try {
-          const resp = await fetch('http://localhost:8000/api/chat', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: `Hello ${user.name}, please reply with a short friendly support assistant greeting.` }),
-          });
-
-          if (!resp.ok) {
-            const text = await resp.text();
-            await addAgentMessage(`Error fetching greeting: ${text}`);
-            return;
-          }
-
-          const json = await resp.json();
-          
-          // Extract the actual response text from the JSON
-          let greetingText = "";
-          if (typeof json === 'object' && json !== null) {
-            if (typeof json.reply === 'string') {
-              greetingText = json.reply;
-            } else if (typeof json.response === 'string') {
-              greetingText = json.response;
-            } else if (typeof json.answer === 'string') {
-              greetingText = json.answer;
-            } else {
-              greetingText = JSON.stringify(json, null, 2);
-            }
-          } else {
-            greetingText = String(json);
-          }
-          
-          await addAgentMessage(greetingText);
-        } catch (err: any) {
-          await addAgentMessage(`Unable to reach backend for greeting: ${err?.message || String(err)}`);
-        }
+        await addAgentMessage(
+          `Hi ${user.name}! 👋 Welcome to ISP Connect Support.\n\nI'm here to help you troubleshoot your internet connection issues. What seems to be the problem with your connection today?\n\nYou can tell me things like:\n• My internet is not working\n• The speed is very slow\n• My device won't connect to WiFi`
+        );
       };
       greeting();
     }
