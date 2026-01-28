@@ -238,5 +238,92 @@
         "completed": false
       }
     ]
+  },
+  {
+    "id": 6,
+    "session_id": "afe1022f-62a4-4615-a928-b9850f71edc9",
+    "user_id": "user-001",
+    "timestamp": "2026-01-28T15:05:27.973167",
+    "user_message": "Can you check if my router is using WPA2 or WPA3 encryption?",
+    "agent_response": "Please follow the steps below to troubleshoot your issue:",
+    "intent_category": "router_issues",
+    "steps": [
+      {
+        "title": "1. Log into your router's admin panel",
+        "description": "Open a web browser and type in the default gateway IP address (usually found at the bottom of the router or in your device's network settings) in the address bar.",
+        "completed": false
+      },
+      {
+        "title": "2. Enter the administrator username and password to access the router's settings. If you haven't changed these, refer to the user manual for the default credentials.",
+        "description": "",
+        "completed": false
+      },
+      {
+        "title": "3. Navigate to the wireless security settings",
+        "description": "Look for a section titled \"Wireless,\" \"WLAN,\" or \"Wi-Fi Settings.\"",
+        "completed": false
+      },
+      {
+        "title": "4. Check the wireless encryption type",
+        "description": "In this section, find the \"Security Mode\" or \"Encryption Type\" option. It should display either WPA2, WPA3, or both as available options. If WPA3 is listed but not currently selected, follow the steps to enable it.",
+        "completed": false
+      },
+      {
+        "title": "5. Update firmware (if needed)",
+        "description": "Ensure your router's firmware is up-to-date. Go to \"Administration\" or \"Firmware Upgrade,\" then check for and install any available updates before making changes to wireless settings.",
+        "completed": false
+      },
+      {
+        "title": "6. Save and apply changes",
+        "description": "After updating the encryption type, save the new settings by clicking \"Apply,\" \"Save,\" or a similar button. The router may reboot before completing the changeover process.",
+        "completed": false
+      },
+      {
+        "title": "7. Verify the connection",
+        "description": "Once the router has rebooted, connect to it using a device that supports WPA2 or WPA3, depending on which encryption type you selected, and confirm that the internet connection is working properly.",
+        "completed": false
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "session_id": "4ae4ecd2-9c78-48ea-8cf3-6f2f38c306d2",
+    "user_id": "user-001",
+    "timestamp": "2026-01-28T15:08:26.782490",
+    "user_message": "Can you check if my router is using WPA2 or WPA3 encryption?",
+    "agent_response": "Please follow the steps below to troubleshoot your issue:",
+    "intent_category": "router_issues",
+    "steps": [
+      {
+        "title": "1. Log into your router's web interface. You can usually do this by typing \"192.168.0.1\" or \"192.168.1.1\" in your web browser's address bar and pressing Enter.",
+        "description": "",
+        "completed": false
+      },
+      {
+        "title": "2. Look for a section labeled \"Wireless\" or \"Wi-Fi Settings\". This is typically found under the \"Network\" or \"Advanced\" tab.",
+        "description": "",
+        "completed": false
+      },
+      {
+        "title": "3. Find the list of wireless networks that your router broadcasts. Identify the network that you are currently connected to.",
+        "description": "",
+        "completed": false
+      },
+      {
+        "title": "4. Check the security mode for the network. It should be either \"WPA2-Personal\" or \"WPA3-Personal\". If it is set to WPA, it means WPA2 and not WPA3.",
+        "description": "",
+        "completed": false
+      },
+      {
+        "title": "5. If the security mode is not what you expected, follow your router's instructions to change it to WPA2 or WPA3. Make sure to save your changes before disconnecting from the web interface.",
+        "description": "",
+        "completed": false
+      },
+      {
+        "title": "6. Verify that all devices connected to your network are updated to support the new encryption standard if you changed it to WPA3. Not all devices currently support this standard.",
+        "description": "",
+        "completed": false
+      }
+    ]
   }
 ]
