@@ -4,7 +4,6 @@ import { v4 } from '@/lib/utils';
 import { runFullDiagnostics, analyzeResults } from '@/services/diagnostics';
 import { createTicket, updateTicketStatus, addAgentAction, addDiagnosticResults, escalateTicket, closeTicket } from '@/services/ticketService';
 import { useAuth } from './AuthContext';
-import { classifyIntent, searchKnowledgeBase, getOSSpecificInstructions } from '@/services/knowledgeBase';
 
 type ChatPhase = 'initial' | 'troubleshooting' | 'resolution_check' | 'system_access' | 'diagnostics' | 'feedback' | 'escalated' | 'closed';
 
@@ -37,7 +36,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [diagnosticResults, setDiagnosticResults] = useState<DiagnosticResult[]>([]);
   const [diagnosticProgress, setDiagnosticProgress] = useState<Record<string, number>>({});
   const [currentIntent, setCurrentIntent] = useState<IntentCategory | null>(null);
-  const [knowledgeBaseArticle, setKnowledgeBaseArticle] = useState<KnowledgeBaseArticle | null>(null);
+  const [sessionId] = useState<string>(() => v4());
 
   const addMessage = useCallback((message: Omit<Message, 'id' | 'timestamp'>) => {
     const fullMessage: Message = {
@@ -71,6 +70,46 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     });
   }, [addMessage]);
 
+  // Fetch response from LLM backend
+  const fetchLLMResponse = useCallback(async (content: string) => {
+    try {
+      const response = await fetch('http://localhost:8000/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: content,
+          session_id: sessionId,
+          user_id: user?.id || 'anonymous'
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      if (data.success) {
+        return {
+          reply: data.reply,
+          intent_category: data.intent_category,
+          steps: data.steps
+        };
+      } else {
+        throw new Error('LLM response not successful');
+      }
+    } catch (error) {
+      console.error('Error fetching LLM response:', error);
+      return {
+        reply: "I'm having trouble processing your request right now. Could you please try again?",
+        intent_category: "unknown",
+        steps: []
+      };
+    }
+  }, [sessionId, user]);
+
   const sendMessage = useCallback(async (content: string) => {
     if (!user || !mcpContext) return;
 
@@ -79,24 +118,31 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
     // Handle different phases
     if (currentPhase === 'initial') {
-      // Classify user intent
-      const { intent } = await classifyIntent(content);
-      setCurrentIntent(intent);
+      // Get response from LLM
+      setIsTyping(true);
+      const llmResponse = await fetchLLMResponse(content);
+      setIsTyping(false);
       
-      // Search knowledge base for relevant article
-      const article = await searchKnowledgeBase(intent);
-      
-      if (article) {
-        setKnowledgeBaseArticle(article);
-        setCurrentSteps(article.steps);
+      if (llmResponse.steps && llmResponse.steps.length > 0) {
+        // Set steps from LLM response
+        const stepsWithIds = llmResponse.steps.map((step: any, index: number) => ({
+          id: `step-${Date.now()}-${index}`,
+          title: step.title,
+          description: step.description,
+          completed: false,
+          order: index + 1
+        }));
+        
+        setCurrentSteps(stepsWithIds);
         setCurrentPhase('troubleshooting');
+        setCurrentIntent(llmResponse.intent_category as IntentCategory);
         
         // Create a ticket for this issue
-        const ticket = await createTicket(user.id, intent, content);
+        const ticket = await createTicket(user.id, llmResponse.intent_category as IntentCategory, content);
         setCurrentTicket(ticket);
         
         await addAgentMessage(
-          `I understand you're having an issue with ${article.title.toLowerCase()}. Please follow the troubleshooting steps shown below and mark each step as complete.`
+          `I understand you're having an issue. Please follow the troubleshooting steps shown below and mark each step as complete.`
         );
       } else {
         await addAgentMessage(
@@ -161,7 +207,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       // Default response for other phases
       await addAgentMessage("How can I assist you further with your internet connection issue?");
     }
-  }, [user, mcpContext, currentPhase, currentSteps, currentTicket, addMessage, addAgentMessage, addSystemMessage, setActiveAgent]);
+  }, [user, mcpContext, currentPhase, currentSteps, currentTicket, addMessage, addAgentMessage, addSystemMessage, setActiveAgent, fetchLLMResponse, sessionId]);
 
   const markStepComplete = useCallback((stepId: string) => {
     setCurrentSteps(prev => 
