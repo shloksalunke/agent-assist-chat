@@ -54,5 +54,51 @@
         "completed": false
       }
     ]
+  },
+  {
+    "id": 2,
+    "session_id": "e718f5fb-8e39-4778-9b09-807074d3dd96",
+    "user_id": "user-001",
+    "timestamp": "2026-01-28T14:26:05.057093",
+    "user_message": "actually im facing an issue like on my laptop is connected to the routers wifi nd the speed of internet is very very slow as compare to yesterday results please help me to solve this issue",
+    "agent_response": "Please follow the steps below to troubleshoot your issue:",
+    "intent_category": "slow_speed",
+    "steps": [
+      {
+        "title": "1. Check if other devices connected to the same network are experiencing similar slow internet speeds. This will help determine if the issue is specific to your laptop or a wider network problem.",
+        "description": "",
+        "completed": false
+      },
+      {
+        "title": "2. Restart your router and modem by unplugging both devices, waiting for about 30 seconds, then plugging them back in. Give it a few minutes for the connection to re-establish before testing your internet speed again.",
+        "description": "",
+        "completed": false
+      },
+      {
+        "title": "3. If step 2 doesn't improve your internet speed, move your laptop closer to the router to ensure a stronger Wi-Fi signal.",
+        "description": "",
+        "completed": false
+      },
+      {
+        "title": "4. Disable any VPN or proxy servers you may be using as they can affect your internet connection.",
+        "description": "",
+        "completed": false
+      },
+      {
+        "title": "5. Update your wireless driver by going to the Device Manager, expanding the Network adapters section, right-clicking on Wireless 802.11, and selecting Update driver.",
+        "description": "",
+        "completed": false
+      },
+      {
+        "title": "6. Try connecting to the internet via an Ethernet cable instead of Wi-Fi if available. This can provide a more stable and faster connection.",
+        "description": "",
+        "completed": false
+      },
+      {
+        "title": "7. If none of the above steps resolve the issue, contact your ISP support for further assistance. They may be able to identify a network outage or other potential issues that could be impacting your internet speed.",
+        "description": "",
+        "completed": false
+      }
+    ]
   }
 ]

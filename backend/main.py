@@ -4,8 +4,7 @@ import requests
 from fastapi.middleware.cors import CORSMiddleware
 import logging
 from typing import Any, List, Dict
-import json
-import os
+from database import ConversationDB
 
 app = FastAPI(
     title="Local LLM API",
@@ -25,8 +24,8 @@ app.add_middleware(
 OLLAMA_URL = "http://localhost:11434/api/generate"
 MODEL_NAME = "mistral4bit"
 
-# JSON database file path
-CONVERSATIONS_FILE = "conversations.json"
+# Database instance
+db = ConversationDB()
 
 class ChatRequest(BaseModel):
     message: str
@@ -41,46 +40,8 @@ class ChatResponse(BaseModel):
     steps: List[dict] = []
 
 
-def init_db():
-    """Initialize the JSON database"""
-    if not os.path.exists(CONVERSATIONS_FILE):
-        with open(CONVERSATIONS_FILE, 'w') as f:
-            json.dump([], f)
-
-
-def log_conversation(session_id: str, user_id: str, user_message: str, 
-                    agent_response: str, intent_category: str = None, steps: List[Dict] = None) -> int:
-    """Log a conversation entry and return the conversation ID"""
-    # Read existing data
-    if os.path.exists(CONVERSATIONS_FILE):
-        with open(CONVERSATIONS_FILE, 'r') as f:
-            conversations = json.load(f)
-    else:
-        conversations = []
-    
-    # Create new conversation entry
-    conversation_entry = {
-        "id": len(conversations) + 1,
-        "session_id": session_id,
-        "user_id": user_id,
-        "timestamp": __import__('datetime').datetime.now().isoformat(),
-        "user_message": user_message,
-        "agent_response": agent_response,
-        "intent_category": intent_category,
-        "steps": steps or []
-    }
-    
-    conversations.append(conversation_entry)
-    
-    # Write back to file
-    with open(CONVERSATIONS_FILE, 'w') as f:
-        json.dump(conversations, f, indent=2)
-    
-    return conversation_entry["id"]
-
-
 def parse_llm_response_for_steps(response_text: str) -> List[dict]:
-    """Parse LLM response to extract troubleshooting steps"""
+    """Parse LLM response to extract troubleshooting steps with enhanced formatting"""
     steps = []
     
     # Split response into lines
@@ -140,7 +101,7 @@ def chat(req: ChatRequest):
 
     payload = {
         "model": MODEL_NAME,
-        "prompt": f"You are an ISP support agent. The user is reporting: '{req.message}'. Provide troubleshooting steps in a numbered list format. Be concise and clear. Each step should be actionable.",
+        "prompt": f"You are an ISP support agent. The user is reporting: '{req.message}'. Provide troubleshooting steps in a numbered list format. Be concise and clear. Each step should be actionable with specific instructions like 'Open Settings > Network > Click on WiFi' or 'Navigate to Control Panel > Network and Sharing Center'. Do not include markdown formatting.",
         "stream": False
     }
 
@@ -203,8 +164,8 @@ def chat(req: ChatRequest):
         # Create a simplified greeting message instead of full LLM response
         greeting = "Please follow the steps below to troubleshoot your issue:"
         
-        # Log conversation
-        conversation_id = log_conversation(
+        # Log conversation to database
+        conversation_id = db.log_conversation(
             req.session_id, 
             req.user_id, 
             req.message, 
@@ -229,6 +190,3 @@ def chat(req: ChatRequest):
     except Exception as e:
         logging.exception("Unexpected error in /api/chat: %s", e)
         raise HTTPException(status_code=502, detail="Internal server error")
-
-# Initialize the database when the app starts
-init_db()

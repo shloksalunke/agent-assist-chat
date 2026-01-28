@@ -61,7 +61,7 @@ export function TroubleshootingSteps({ steps, onComplete }: TroubleshootingSteps
                       step.completed && 'line-through text-muted-foreground'
                     )}
                   >
-                    {step.title}
+                    {step.title.replace(/^\d+\.\s*/, '')}
                   </h4>
                 </div>
 

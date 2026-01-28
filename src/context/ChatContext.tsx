@@ -221,6 +221,32 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         );
       }
     }
+    else if (currentPhase === 'feedback') {
+      // After feedback, if issue is still not resolved, assign engineer
+      const lower = content.toLowerCase();
+      if (lower.includes('no') || lower.includes('still') || lower.includes('not working') || lower.includes('problem')) {
+        if (currentTicket) {
+          await addAgentAction(currentTicket.id, {
+            agentType: 'conversational',
+            action: 'User indicated issue not resolved after diagnostics, escalating to engineer',
+            success: true,
+          });
+        }
+
+        setCurrentPhase('engineer_assigned');
+        setEngineerAssigned(true);
+        setActiveAgent('conversational');
+        
+        await addAgentMessage(
+          "I understand your issue is still not resolved. I'm assigning an engineer to help you personally.\n\n📞 **Contact Information:**\n• Engineer Mobile: +1 (555) 123-4567\n• Support Line: 1-800-ISP-HELP\n\nAn engineer will contact you shortly. If you have any questions about the engineer assignment or need to provide additional information, please say \"ask query\".\n\nEstimated response time: 15-30 minutes.",
+          { requiresAction: true, actionType: 'escalation' }
+        );
+      } else {
+        await addAgentMessage(
+          "Thank you for your feedback! If you have any other issues, please let me know."
+        );
+      }
+    }
     else if (currentPhase === 'troubleshooting') {
       // Get response from LLM for follow-up questions
       setIsTyping(true);
