@@ -33,25 +33,24 @@
   --glow-lg: none;
 }
 
-/* Cyberpunk theme tokens */
+/* CYBERPUNK – NEON CODER */
 [data-theme="cyberpunk"] {
-  --bg: #000000; /* pure black */
-  --panel-bg: #071018; /* deep charcoal */
+  --bg: #000000;              /* true black */
+  --panel-bg: #050C14;        /* terminal panel */
   --panel-elev: rgba(0,0,0,0.3);
-  --text: #e6f7ff; /* very light */
-  --muted: #9aa6b2;
+  --text: #E8F9FF;            /* icy white */
+  --muted: #7F93A8;           /* dim text */
 
-  /* Strict accent palette */
-  --accent-primary: #00f0ff; /* neon cyan */
-  --accent-secondary: #ffea00; /* neon yellow */
-  --status-success: #00ff7a; /* neon green */
+  --accent-primary: #00F0FF;  /* neon cyan */
+  --accent-secondary: #FFE600;/* neon yellow */
+  --status-success: #00FF85;  /* neon green */
 
-  --panel-border: rgba(0,255,240,0.12);
+  --panel-border: rgba(0,240,255,0.18);
 
-  /* Glow system (three levels) */
-  --glow-sm: 0 0 6px rgba(0,240,255,0.12);
-  --glow-md: 0 0 14px rgba(0,240,255,0.16);
-  --glow-lg: 0 0 28px rgba(0,240,255,0.18);
+  /* glow */
+  --glow-sm: 0 0 6px rgba(0,240,255,0.25);
+  --glow-md: 0 0 14px rgba(0,240,255,0.35);
+  --glow-lg: 0 0 28px rgba(0,240,255,0.45);
 }
 
 /* Global base styling to apply tokens */
@@ -128,7 +127,7 @@ body {
 [data-theme="cyberpunk"] .bg-chat-agent.message-bubble {
   border: 1px solid var(--accent-secondary);
   box-shadow: var(--glow-sm);
-  background: rgba(255,234,0,0.02);
+  background: rgba(255,230,0,0.02);
 }
 
 /* Typing indicator - reuse in both themes, glow only in cyberpunk */
@@ -164,7 +163,7 @@ body {
 [data-theme="cyberpunk"] .chat-input {
   border: 1px solid var(--accent-primary);
   box-shadow: var(--glow-sm);
-  background: rgba(0,0,0,0.6);
+  background: rgba(5,12,20,0.8);
 }
 
 /* Timestamp */
