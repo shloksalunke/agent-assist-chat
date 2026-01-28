@@ -472,19 +472,20 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     greetedRef.current = false;
   }, []);
 
-  // Send initial greeting when chat loads
+  // Send initial greeting when chat loads (only once)
   React.useEffect(() => {
-    if (user && mcpContext && messages.length === 0 && !greetedRef.current) {
+    if (!greetedRef.current && user && mcpContext && messages.length === 0) {
+      greetedRef.current = true; // Set guard immediately to prevent duplicates
+      
       const greeting = async () => {
         await new Promise(resolve => setTimeout(resolve, 500));
         await addAgentMessage(
           `Hi ${user.name}! 👋 Welcome to ISP Connect Support.\n\nI'm here to help you troubleshoot your internet connection issues. What seems to be the problem with your connection today?\n\nYou can tell me things like:\n• My internet is not working\n• The speed is very slow\n• My device won't connect to WiFi`
         );
-        greetedRef.current = true;
       };
       greeting();
     }
-  }, [user, mcpContext, messages.length, addAgentMessage]);
+  }, [user, mcpContext]);
 
   return (
     <ChatContext.Provider

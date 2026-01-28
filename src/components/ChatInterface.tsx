@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Wifi, LogOut, Loader2, Phone, User } from 'lucide-react';
+import { Send, Wifi, LogOut, Loader2, Phone, User, RefreshCw, Sparkles, Zap } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useChat, ChatProvider } from '@/context/ChatContext';
 import { AgentBadge } from '@/components/AgentBadge';
@@ -47,7 +47,13 @@ function ChatMessage({ message, showSteps }: { message: Message; showSteps?: boo
           isUser ? 'gradient-primary' : 'gradient-accent'
         )}
       >
-        {isUser ? 'U' : 'AI'}
+        {isUser ? (
+          <User className="w-4 h-4" />
+        ) : (
+          <div className="flex items-center">
+            <Sparkles className="w-4 h-4" />
+          </div>
+        )}
       </div>
 
       {/* Message content */}
@@ -64,12 +70,12 @@ function ChatMessage({ message, showSteps }: { message: Message; showSteps?: boo
             'inline-block rounded-2xl px-4 py-2.5 text-sm message-bubble',
             isUser
               ? 'bg-chat-user text-primary-foreground rounded-tr-sm'
-              : 'bg-chat-agent border border-border text-foreground rounded-tl-sm'
+              : 'bg-chat-agent border border-border text-foreground rounded-tl-sm shadow-sm'
           )}
         >
           <div className="whitespace-pre-wrap leading-relaxed">
             {message.content.split(/(\*\*[^*]+\*\*)/g).map((part, i) => {
-              if (part.startsWith('**') && part.endsWith('**')) {
+              if (part.startsWith('**') && part.endsWith('**)')) {
                 return (
                   <strong key={i} className="font-semibold">
                     {part.slice(2, -2)}
@@ -104,9 +110,9 @@ function TypingIndicator() {
       className="flex gap-3 mb-4"
     >
       <div className="flex-shrink-0 w-9 h-9 rounded-full gradient-accent flex items-center justify-center text-white font-medium">
-        AI
+        <Sparkles className="w-4 h-4" />
       </div>
-      <div className="bg-chat-agent border border-border rounded-2xl rounded-tl-sm px-4 py-3">
+      <div className="bg-chat-agent border border-border rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm">
         <div className="flex gap-1">
           <span className="typing-dot" />
           <span className="typing-dot" />
@@ -165,6 +171,11 @@ function ChatInterfaceContent() {
     }
   };
 
+  const handleNewConversation = () => {
+    startNewConversation();
+    setInputValue('');
+  };
+
   // Find the last message with troubleshooting steps
   const lastStepsMessageIndex = [...messages]
     .reverse()
@@ -183,9 +194,12 @@ function ChatInterfaceContent() {
           <div>
             <h1 className="font-semibold text-foreground">ISP Connect Support</h1>
             <p className="text-xs text-muted-foreground">AI-Powered Assistance</p>
-            <div className="network-status mt-1">
-              <span className="dot" aria-hidden />
-              <span className="ml-2 text-xs">Online</span>
+            <div className="network-status mt-1 flex items-center">
+              <span className="flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-success opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-success"></span>
+              </span>
+              <span className="ml-2 text-xs">Online • Connected</span>
             </div>
           </div>
         </div>
@@ -200,9 +214,20 @@ function ChatInterfaceContent() {
             />
           )}
 
+          {/* New Conversation Button */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleNewConversation}
+            className="hidden sm:flex items-center gap-2"
+          >
+            <RefreshCw className="w-4 h-4" />
+            New Conversation
+          </Button>
+
           {/* User info & logout */}
           <div className="flex items-center gap-3">
-            <div className="text-right">
+            <div className="text-right hidden sm:block">
               <p className="text-sm font-medium text-foreground">{user?.name}</p>
               <p className="text-xs text-muted-foreground">{user?.plan}</p>
             </div>
@@ -221,6 +246,24 @@ function ChatInterfaceContent() {
       {/* Chat messages */}
       <ScrollArea ref={scrollRef} className="flex-1 p-4">
         <div className="max-w-3xl mx-auto">
+          {/* Welcome message for new conversations */}
+          {messages.length === 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-center py-8"
+            >
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full gradient-primary mb-4">
+                <Zap className="w-8 h-8 text-white" />
+              </div>
+              <h2 className="text-xl font-semibold text-foreground mb-2">Welcome to ISP Connect Support!</h2>
+              <p className="text-muted-foreground max-w-md mx-auto">
+                I'm your AI assistant ready to help with any internet connection issues. 
+                Describe your problem and I'll guide you through troubleshooting steps.
+              </p>
+            </motion.div>
+          )}
+
           <AnimatePresence mode="popLayout">
             {messages.map((message, index) => (
               <ChatMessage
@@ -307,7 +350,7 @@ function ChatInterfaceContent() {
                   ? 'This conversation has ended. Start a new one to get help.'
                   : currentPhase === 'engineer_assigned'
                   ? 'Type "ask query" to start a new conversation...'
-                  : 'Type your message...'
+                  : 'Describe your internet issue...'
               }
               disabled={currentPhase === 'closed' || isSending}
               className="flex-1 h-12 bg-background chat-input"
@@ -332,6 +375,7 @@ function ChatInterfaceContent() {
                 'My internet is not working',
                 'The speed is very slow',
                 "My device won't connect to WiFi",
+                'Having intermittent disconnections',
               ].map((hint) => (
                 <button
                   key={hint}
