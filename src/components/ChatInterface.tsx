@@ -131,6 +131,7 @@ function ChatInterfaceContent() {
     grantSystemAccess,
     submitFeedback,
     startNewConversation,
+    assignEngineer,
   } = useChat();
 
   const [inputValue, setInputValue] = useState('');

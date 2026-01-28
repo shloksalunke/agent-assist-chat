@@ -40,6 +40,18 @@ class ConversationDB:
             )
         ''')
         
+        # Create feedback table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS feedback (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                conversation_id INTEGER NOT NULL,
+                rating INTEGER NOT NULL,
+                comment TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (conversation_id) REFERENCES conversations (id)
+            )
+        ''')
+        
         conn.commit()
         conn.close()
     
@@ -137,3 +149,34 @@ class ConversationDB:
         
         conn.commit()
         conn.close()
+        
+    def log_feedback(self, conversation_id: int, rating: int, comment: str = None):
+        """Log feedback for a conversation"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            INSERT INTO feedback (conversation_id, rating, comment)
+            VALUES (?, ?, ?)
+        ''', (conversation_id, rating, comment))
+        
+        conn.commit()
+        conn.close()
+        
+    def get_feedback_stats(self) -> Dict[str, Any]:
+        """Get feedback statistics"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT AVG(rating) as avg_rating, COUNT(*) as total_feedback
+            FROM feedback
+        ''')
+        
+        row = cursor.fetchone()
+        conn.close()
+        
+        return {
+            "avg_rating": row[0] if row[0] else 0,
+            "total_feedback": row[1] if row[1] else 0
+        }

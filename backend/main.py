@@ -32,6 +32,10 @@ class ChatRequest(BaseModel):
     session_id: str
     user_id: str
 
+class FeedbackRequest(BaseModel):
+    conversation_id: int
+    rating: int
+    comment: str = None
 
 class ChatResponse(BaseModel):
     success: bool
@@ -39,6 +43,9 @@ class ChatResponse(BaseModel):
     intent_category: str = "unknown"
     steps: List[dict] = []
 
+class FeedbackResponse(BaseModel):
+    success: bool
+    message: str
 
 def parse_llm_response_for_steps(response_text: str) -> List[dict]:
     """Parse LLM response to extract troubleshooting steps with enhanced formatting"""
@@ -92,7 +99,6 @@ def parse_llm_response_for_steps(response_text: str) -> List[dict]:
         })
     
     return steps
-
 
 @app.post("/api/chat", response_model=ChatResponse)
 def chat(req: ChatRequest):
@@ -205,3 +211,63 @@ Provide troubleshooting steps in a numbered list format. Be concise and clear. E
     except Exception as e:
         logging.exception("Unexpected error in /api/chat: %s", e)
         raise HTTPException(status_code=502, detail="Internal server error")
+
+@app.post("/api/assign_engineer", response_model=ChatResponse)
+def assign_engineer(req: ChatRequest):
+    """Assign an engineer to the user's issue"""
+    try:
+        # In a real implementation, this would integrate with a ticketing system
+        # For now, we'll just return a message indicating engineer assignment
+        engineer_message = (
+            "I understand your issue is still not resolved. I'm assigning an engineer to help you personally.\n\n"
+            "📞 **Contact Information:**\n"
+            "• Engineer Mobile: +1 (555) 123-4567\n"
+            "• Support Line: 1-800-ISP-HELP\n\n"
+            "An engineer will contact you shortly. If you have any questions about the engineer assignment "
+            "or need to provide additional information, please say \"ask query\".\n\n"
+            "Estimated response time: 15-30 minutes."
+        )
+        
+        # Log engineer assignment to database
+        db.log_conversation(
+            req.session_id,
+            req.user_id,
+            req.message,
+            "Engineer assigned to case",
+            "escalation"
+        )
+        
+        return {
+            "success": True,
+            "reply": engineer_message,
+            "intent_category": "escalation",
+            "steps": []
+        }
+    except Exception as e:
+        logging.exception("Error assigning engineer: %s", e)
+        raise HTTPException(status_code=500, detail="Failed to assign engineer")
+
+@app.post("/api/feedback", response_model=FeedbackResponse)
+def submit_feedback(req: FeedbackRequest):
+    """Submit feedback for a conversation"""
+    try:
+        # Log feedback to database
+        db.log_feedback(req.conversation_id, req.rating, req.comment)
+        
+        return {
+            "success": True,
+            "message": "Feedback submitted successfully"
+        }
+    except Exception as e:
+        logging.exception("Error submitting feedback: %s", e)
+        raise HTTPException(status_code=500, detail="Failed to submit feedback")
+
+@app.get("/api/feedback/stats")
+def get_feedback_stats():
+    """Get feedback statistics"""
+    try:
+        stats = db.get_feedback_stats()
+        return stats
+    except Exception as e:
+        logging.exception("Error getting feedback stats: %s", e)
+        raise HTTPException(status_code=500, detail="Failed to get feedback stats")

@@ -22,6 +22,7 @@ interface ChatContextType {
   grantSystemAccess: (granted: boolean) => Promise<void>;
   submitFeedback: (rating: number, comment?: string) => Promise<void>;
   startNewConversation: () => void;
+  assignEngineer: () => Promise<void>;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -38,7 +39,6 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [diagnosticProgress, setDiagnosticProgress] = useState<Record<string, number>>({});
   const [currentIntent, setCurrentIntent] = useState<IntentCategory | null>(null);
   const [sessionId] = useState<string>(() => v4());
-  const [engineerAssigned, setEngineerAssigned] = useState(false);
 
   const addMessage = useCallback((message: Omit<Message, 'id' | 'timestamp'>) => {
     const fullMessage: Message = {
@@ -111,6 +111,46 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       };
     }
   }, [sessionId, user]);
+
+  const assignEngineer = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      const response = await fetch('http://localhost:8000/api/assign_engineer', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: 'Assign engineer',
+          session_id: sessionId,
+          user_id: user.id
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      if (data.success) {
+        setCurrentPhase('engineer_assigned');
+        setDiagnosticResults([]); // Clear diagnostics when engineer is assigned
+        setDiagnosticProgress({});
+        
+        await addAgentMessage(
+          data.reply,
+          { requiresAction: true, actionType: 'escalation' }
+        );
+      }
+    } catch (error) {
+      console.error('Error assigning engineer:', error);
+      await addAgentMessage(
+        "I'm having trouble assigning an engineer right now. Please call our support line at 1-800-ISP-HELP for immediate assistance."
+      );
+    }
+  }, [user, sessionId, addAgentMessage]);
 
   const sendMessage = useCallback(async (content: string) => {
     if (!user || !mcpContext) return;
@@ -215,7 +255,6 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         
         // Restart conversation with conversational agent
         setCurrentPhase('initial');
-        setEngineerAssigned(false);
         await addAgentMessage(
           `I'm ready to help you with your internet connection issues. What seems to be the problem with your connection today?\n\nYou can tell me things like:\n• My internet is not working\n• The speed is very slow\n• My device won't connect to WiFi`
         );
@@ -237,14 +276,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           });
         }
 
-        setCurrentPhase('engineer_assigned');
-        setEngineerAssigned(true);
-        setActiveAgent('conversational');
-        
-        await addAgentMessage(
-          "I understand your issue is still not resolved. I'm assigning an engineer to help you personally.\n\n📞 **Contact Information:**\n• Engineer Mobile: +1 (555) 123-4567\n• Support Line: 1-800-ISP-HELP\n\nAn engineer will contact you shortly. If you have any questions about the engineer assignment or need to provide additional information, please say \"ask query\".\n\nEstimated response time: 15-30 minutes.",
-          { requiresAction: true, actionType: 'escalation' }
-        );
+        await assignEngineer();
       } else {
         await addAgentMessage(
           "Thank you for your feedback! If you have any other issues, please let me know."
@@ -268,16 +300,13 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       // Default response for other phases
       await addAgentMessage("How can I assist you further with your internet connection issue?");
     }
-  }, [user, mcpContext, currentPhase, currentSteps, currentTicket, addMessage, addAgentMessage, addSystemMessage, setActiveAgent, fetchLLMResponse, sessionId]);
+  }, [user, mcpContext, currentPhase, currentSteps, currentTicket, addMessage, addAgentMessage, addSystemMessage, setActiveAgent, fetchLLMResponse, sessionId, assignEngineer]);
 
   const markStepComplete = useCallback((stepId: string) => {
     setCurrentSteps(prev => 
       prev.map(step => 
         step.id === stepId ? { ...step, completed: true } : step
-      )
-    );
-    
-    // Check if all steps are completed
+      ) // Check if all steps are completed
     const updatedSteps = currentSteps.map(step => 
       step.id === stepId ? { ...step, completed: true } : step
     );
@@ -378,13 +407,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         );
       } else if (analysis.overallStatus === 'escalate') {
         await escalateTicket(currentTicket.id);
-        setCurrentPhase('engineer_assigned');
-        setEngineerAssigned(true);
-        
-        await addAgentMessage(
-          `**Diagnostic Complete** - Engineer Assigned\n\n${analysis.summary}\n\nYour case has been assigned to an engineer who will contact you shortly.\n\n📞 **Contact Information:**\n• Engineer Mobile: +1 (555) 123-4567\n• Support Line: 1-800-ISP-HELP\n\nIf you have any questions about the engineer assignment or need to provide additional information, please say "ask query". Otherwise, please wait for the engineer to contact you.\n\nEstimated response time: 15-30 minutes.`,
-          { requiresAction: true, actionType: 'escalation' }
-        );
+        await assignEngineer();
       } else {
         setCurrentPhase('resolution_check');
         
@@ -400,10 +423,27 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         "I understand you prefer not to grant system access. Without running diagnostics, I recommend:\n\n1. Try the troubleshooting steps again\n2. Contact us by phone at 1-800-ISP-HELP\n3. Schedule a technician visit\n\nWould you like me to help with any of these options?"
       );
     }
-  }, [currentTicket, user, addAgentMessage, addSystemMessage]);
+  }, [currentTicket, user, addAgentMessage, addSystemMessage, assignEngineer]);
 
   const submitFeedback = useCallback(async (rating: number, comment?: string) => {
     if (!currentTicket) return;
+
+    try {
+      // Submit feedback to backend
+      await fetch('http://localhost:8000/api/feedback', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          conversation_id: parseInt(currentTicket.id.split('-')[1]),
+          rating,
+          comment
+        })
+      });
+    } catch (error) {
+      console.error('Error submitting feedback:', error);
+    }
 
     await closeTicket(currentTicket.id);
     await addAgentAction(currentTicket.id, {
@@ -431,7 +471,6 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     setDiagnosticResults([]);
     setDiagnosticProgress({});
     setCurrentIntent(null);
-    setEngineerAssigned(false);
   }, []);
 
   // Send initial greeting when chat loads
@@ -464,6 +503,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         grantSystemAccess,
         submitFeedback,
         startNewConversation,
+        assignEngineer,
       }}
     >
       {children}
