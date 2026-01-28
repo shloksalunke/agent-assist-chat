@@ -1,0 +1,58 @@
+[
+  {
+    "id": 1,
+    "session_id": "06b92497-e903-4487-a71f-bb6ea2a0f5be",
+    "user_id": "user-001",
+    "timestamp": "2026-01-28T14:10:46.865159",
+    "user_message": "my wifi is connected to the laptop but still i is showing no internet connection",
+    "agent_response": "Please follow the steps below to troubleshoot your issue:",
+    "intent_category": "internet_connectivity",
+    "steps": [
+      {
+        "title": "1. Check if other devices are experiencing the same issue. If so, it may be an ISP outage or network problem. Contact your Internet Service Provider for assistance.",
+        "description": "",
+        "completed": false
+      },
+      {
+        "title": "2. Restart your modem and router",
+        "description": "unplug both devices, wait for a minute, then plug them back in. Wait for the lights to stabilize before trying to connect again.",
+        "completed": false
+      },
+      {
+        "title": "3. Forget and reconnect to the Wi-Fi network on your laptop",
+        "description": "go to Settings > Network & Internet > Wi-Fi, select your network, click \"Forget\", then reconnect to it. Enter the correct password if prompted.",
+        "completed": false
+      },
+      {
+        "title": "4. Disable IPv6 temporarily",
+        "description": "go to Control Panel > Network and Internet > Network and Sharing Center > Change adapter settings. Right-click on your active network connection, select Properties, uncheck \"Internet Protocol Version 6 (TCP/IPv6)\", then click OK. Try connecting to the internet again.",
+        "completed": false
+      },
+      {
+        "title": "5. Check for Windows updates",
+        "description": "go to Settings > Update & Security > Windows Update, and click \"Check for updates\". Install any available updates and restart your computer.",
+        "completed": false
+      },
+      {
+        "title": "6. Reset TCP/IP stack",
+        "description": "go to Command Prompt (Admin) by typing cmd in Start menu search bar, then enter the following commands: netsh int ip reset reset.log, ipconfig /release, ipconfig /renew, and exit. Restart your computer.",
+        "completed": false
+      },
+      {
+        "title": "7. Run Network Troubleshooter",
+        "description": "go to Settings > Network & Internet > Status > Network troubleshooter. Click \"Run the troubleshooter\" and follow the prompts.",
+        "completed": false
+      },
+      {
+        "title": "8. Try connecting using an Ethernet cable if available, or use a mobile hotspot as a temporary solution. If internet access is restored, the issue may be with your Wi-Fi connection.",
+        "description": "",
+        "completed": false
+      },
+      {
+        "title": "9. If none of the above steps resolve the issue, contact your Internet Service Provider for further assistance. They may need to investigate potential issues on their end.",
+        "description": "",
+        "completed": false
+      }
+    ]
+  }
+]

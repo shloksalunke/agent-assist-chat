@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Wifi, LogOut, Loader2 } from 'lucide-react';
+import { Send, Wifi, LogOut, Loader2, Phone, User } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useChat, ChatProvider } from '@/context/ChatContext';
 import { AgentBadge } from '@/components/AgentBadge';
@@ -130,6 +130,7 @@ function ChatInterfaceContent() {
     confirmResolution,
     grantSystemAccess,
     submitFeedback,
+    startNewConversation,
   } = useChat();
 
   const [inputValue, setInputValue] = useState('');
@@ -235,7 +236,8 @@ function ChatInterfaceContent() {
           {/* Live diagnostics */}
           {(currentPhase === 'diagnostics' || diagnosticResults.length > 0) &&
             currentPhase !== 'feedback' &&
-            currentPhase !== 'closed' && (
+            currentPhase !== 'closed' &&
+            currentPhase !== 'engineer_assigned' && (
               <LiveDiagnostics
                 results={diagnosticResults}
                 progress={diagnosticProgress}
@@ -245,6 +247,39 @@ function ChatInterfaceContent() {
 
           {/* Feedback form */}
           {currentPhase === 'feedback' && <FeedbackForm onSubmit={submitFeedback} />}
+          
+          {/* Engineer assigned message */}
+          {currentPhase === 'engineer_assigned' && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-4 p-5 bg-card border border-border rounded-xl"
+            >
+              <div className="flex items-center gap-2 mb-4">
+                <User className="w-5 h-5 text-primary" />
+                <h4 className="font-semibold text-foreground">Engineer Assigned</h4>
+              </div>
+              
+              <p className="text-sm text-muted-foreground mb-4">
+                An engineer has been assigned to resolve your issue. They will contact you shortly at the provided number.
+              </p>
+              
+              <div className="flex items-center gap-3 mb-4 p-3 bg-muted/50 rounded-lg">
+                <Phone className="w-5 h-5 text-primary" />
+                <div>
+                  <p className="text-sm font-medium text-foreground">Contact Information</p>
+                  <p className="text-xs text-muted-foreground">Engineer Mobile: +1 (555) 123-4567</p>
+                </div>
+              </div>
+              
+              <Button
+                onClick={() => sendMessage('ask query')}
+                className="w-full gap-2 gradient-accent hover:opacity-90"
+              >
+                Ask Query
+              </Button>
+            </motion.div>
+          )}
         </div>
       </ScrollArea>
 
@@ -266,6 +301,8 @@ function ChatInterfaceContent() {
               placeholder={
                 currentPhase === 'closed'
                   ? 'This conversation has ended. Start a new one to get help.'
+                  : currentPhase === 'engineer_assigned'
+                  ? 'Type "ask query" to start a new conversation...'
                   : 'Type your message...'
               }
               disabled={currentPhase === 'closed' || isSending}

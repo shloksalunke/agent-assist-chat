@@ -5,7 +5,7 @@ import { runFullDiagnostics, analyzeResults } from '@/services/diagnostics';
 import { createTicket, updateTicketStatus, addAgentAction, addDiagnosticResults, escalateTicket, closeTicket } from '@/services/ticketService';
 import { useAuth } from './AuthContext';
 
-type ChatPhase = 'initial' | 'troubleshooting' | 'resolution_check' | 'system_access' | 'diagnostics' | 'feedback' | 'escalated' | 'closed';
+type ChatPhase = 'initial' | 'troubleshooting' | 'resolution_check' | 'system_access' | 'diagnostics' | 'feedback' | 'escalated' | 'closed' | 'engineer_assigned';
 
 interface ChatContextType {
   messages: Message[];
@@ -21,6 +21,7 @@ interface ChatContextType {
   confirmResolution: (resolved: boolean) => Promise<void>;
   grantSystemAccess: (granted: boolean) => Promise<void>;
   submitFeedback: (rating: number, comment?: string) => Promise<void>;
+  startNewConversation: () => void;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -37,6 +38,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [diagnosticProgress, setDiagnosticProgress] = useState<Record<string, number>>({});
   const [currentIntent, setCurrentIntent] = useState<IntentCategory | null>(null);
   const [sessionId] = useState<string>(() => v4());
+  const [engineerAssigned, setEngineerAssigned] = useState(false);
 
   const addMessage = useCallback((message: Omit<Message, 'id' | 'timestamp'>) => {
     const fullMessage: Message = {
@@ -203,6 +205,22 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         );
       }
     }
+    else if (currentPhase === 'engineer_assigned') {
+      // Handle user queries after engineer assignment
+      const lower = content.toLowerCase();
+      if (lower.includes('ask') || lower.includes('query') || lower.includes('question') || lower.includes('help')) {
+        // Restart conversation with conversational agent
+        setCurrentPhase('initial');
+        setEngineerAssigned(false);
+        await addAgentMessage(
+          `I'm ready to help you with your internet connection issues. What seems to be the problem with your connection today?\n\nYou can tell me things like:\n• My internet is not working\n• The speed is very slow\n• My device won't connect to WiFi`
+        );
+      } else {
+        await addAgentMessage(
+          "An engineer has been assigned to resolve your issue. If you have any questions about the engineer assignment, please say 'ask query' or 'I have a question'.\n\nOtherwise, please wait for the engineer to contact you at the provided number."
+        );
+      }
+    }
     else if (currentPhase === 'troubleshooting') {
       // Get response from LLM for follow-up questions
       setIsTyping(true);
@@ -330,10 +348,11 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         );
       } else if (analysis.overallStatus === 'escalate') {
         await escalateTicket(currentTicket.id);
-        setCurrentPhase('escalated');
+        setCurrentPhase('engineer_assigned');
+        setEngineerAssigned(true);
         
         await addAgentMessage(
-          `**Diagnostic Complete** - Escalation Required\n\n${analysis.summary}\n\nYour case has been assigned to a human engineer who will contact you shortly. Your ticket number is: **${currentTicket.id}**\n\nEstimated response time: 15-30 minutes`,
+          `**Diagnostic Complete** - Engineer Assigned\n\n${analysis.summary}\n\nYour case has been assigned to an engineer who will contact you shortly.\n\n📞 **Contact Information:**\n• Engineer Mobile: +1 (555) 123-4567\n• Support Line: 1-800-ISP-HELP\n\nIf you have any questions about the engineer assignment or need to provide additional information, please say "ask query". Otherwise, please wait for the engineer to contact you.\n\nEstimated response time: 15-30 minutes.`,
           { requiresAction: true, actionType: 'escalation' }
         );
       } else {
@@ -372,6 +391,19 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     );
   }, [currentTicket, addAgentMessage, setActiveAgent]);
 
+  const startNewConversation = useCallback(() => {
+    // Reset all state to start fresh
+    setMessages([]);
+    setCurrentPhase('initial');
+    setIsTyping(false);
+    setCurrentSteps([]);
+    setCurrentTicket(null);
+    setDiagnosticResults([]);
+    setDiagnosticProgress({});
+    setCurrentIntent(null);
+    setEngineerAssigned(false);
+  }, []);
+
   // Send initial greeting when chat loads
   React.useEffect(() => {
     if (user && mcpContext && messages.length === 0) {
@@ -401,6 +433,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         confirmResolution,
         grantSystemAccess,
         submitFeedback,
+        startNewConversation,
       }}
     >
       {children}
