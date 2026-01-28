@@ -134,31 +134,6 @@ function ChatInterfaceContent() {
     assignEngineer,
   } = useChat();
 
-  // Theme toggle state (persist across reloads using localStorage)
-  const [isCyberpunk, setIsCyberpunk] = useState<boolean>(() => {
-    try {
-      return localStorage.getItem('theme') === 'cyberpunk';
-    } catch {
-      return false;
-    }
-  });
-
-  useEffect(() => {
-    try {
-      if (isCyberpunk) {
-        document.documentElement.setAttribute('data-theme', 'cyberpunk');
-        localStorage.setItem('theme', 'cyberpunk');
-      } else {
-        document.documentElement.removeAttribute('data-theme');
-        localStorage.setItem('theme', 'default');
-      }
-    } catch (e) {
-      // ignore storage errors
-    }
-  }, [isCyberpunk]);
-
-  const toggleTheme = () => setIsCyberpunk(prev => !prev);
-
   const [inputValue, setInputValue] = useState('');
   const [isSending, setIsSending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -227,14 +202,6 @@ function ChatInterfaceContent() {
 
           {/* User info & logout */}
           <div className="flex items-center gap-3">
-            {/* Theme toggle button */}
-            <Button
-              onClick={toggleTheme}
-              className="btn mr-2"
-              variant="ghost"
-            >
-              {isCyberpunk ? 'Disable Cyberpunk Mode' : 'Enable Cyberpunk Mode'}
-            </Button>
             <div className="text-right">
               <p className="text-sm font-medium text-foreground">{user?.name}</p>
               <p className="text-xs text-muted-foreground">{user?.plan}</p>
