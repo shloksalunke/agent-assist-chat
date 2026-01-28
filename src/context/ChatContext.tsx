@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
-import type { Message, TroubleshootingStep, Ticket, DiagnosticResult, IntentCategory, KnowledgeBaseArticle } from '@/types/support';
+import type { Message, TroubleshootingStep, Ticket, DiagnosticResult, IntentCategory } from '@/types/support';
 import { v4 } from '@/lib/utils';
 import { runFullDiagnostics, analyzeResults } from '@/services/diagnostics';
 import { createTicket, updateTicketStatus, addAgentAction, addDiagnosticResults, escalateTicket, closeTicket } from '@/services/ticketService';
@@ -209,6 +209,10 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       // Handle user queries after engineer assignment
       const lower = content.toLowerCase();
       if (lower.includes('ask') || lower.includes('query') || lower.includes('question') || lower.includes('help')) {
+        // Clear diagnostics results when starting new conversation
+        setDiagnosticResults([]);
+        setDiagnosticProgress({});
+        
         // Restart conversation with conversational agent
         setCurrentPhase('initial');
         setEngineerAssigned(false);

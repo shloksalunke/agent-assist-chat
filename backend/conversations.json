@@ -100,5 +100,143 @@
         "completed": false
       }
     ]
+  },
+  {
+    "id": 3,
+    "session_id": "803f644e-fca7-4afe-8b1a-3a704b0f7c16",
+    "user_id": "user-001",
+    "timestamp": "2026-01-28T14:52:45.940873",
+    "user_message": "as upto i know json is also stored in database so implement that concept for logs stroing with time and date in database not specially in .json file and do one change after autonomous diagnostic completed take feedback if still not fixed then send that engineer mssg and that conversation loop button , as im seeing that when conversation agent is responsing then that i icon's grey box is empty so in that their should be proper flow like open setting> click on this and this button and all for all types of querus and thier flow accoring to the each quries",
+    "agent_response": "Please follow the steps below to troubleshoot your issue:",
+    "intent_category": "general_inquiry",
+    "steps": [
+      {
+        "title": "1. Understand the issue",
+        "description": "You're asking for assistance in implementing JSON data storage with time and date in a database instead of storing it as a .json file. Additionally, you want to automate sending an engineer message and conversation loop after diagnostic completion, and enhance the conversation agent response with proper flow for all types of queries.",
+        "completed": false
+      },
+      {
+        "title": "2. JSON Storage",
+        "description": "To store JSON data with time and date in a database, follow these steps: a. Choose a database management system (DBMS) that supports JSON data types, such as MySQL or PostgreSQL. b. Create a new table with columns for time, date, and JSON data. c. Update your application code to insert JSON data into the database instead of writing it to a .json file.",
+        "completed": false
+      },
+      {
+        "title": "3. Automated Message Sending",
+        "description": "To automate sending an engineer message after diagnostic completion, you can follow these steps: a. Write a script or use a tool to trigger the message sending after diagnostic completion. b. Modify your application code to call this script or tool when diagnostic completion is detected. c. Configure the script or tool to send an engineer message and start a conversation loop if necessary.",
+        "completed": false
+      },
+      {
+        "title": "4. Improving Agent Response",
+        "description": "To improve agent response with proper flow for all types of queries, consider these steps: a. Define clear query categories based on your use case. b. Create a flowchart or similar diagram for each category that outlines the steps required to complete the query. c. Implement this flow in your application code or conversation agent script. d. Test the flow and make adjustments as necessary.",
+        "completed": false
+      },
+      {
+        "title": "5. Empty Conversation Agent Response Icon",
+        "description": "To address the empty response icon issue, consider these steps: a. Investigate the cause of the empty icon by checking your application or conversation agent code. b. If needed, update the code to provide proper icons for each response type. c. Test the updated code and ensure that the appropriate icons are displayed when using the conversation agent.",
+        "completed": false
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "session_id": "9b546fd4-4ee2-45c6-9085-37b335f4518b",
+    "user_id": "user-001",
+    "timestamp": "2026-01-28T14:53:06.503462",
+    "user_message": "Can you check if my router is using WPA2 or WPA3 encryption?",
+    "agent_response": "Please follow the steps below to troubleshoot your issue:",
+    "intent_category": "router_issues",
+    "steps": [
+      {
+        "title": "1. Log into your router's web interface. You can typically do this by opening a web browser and entering the router's IP address (usually found on the bottom or back of the router) in the address bar.",
+        "description": "",
+        "completed": false
+      },
+      {
+        "title": "2. Enter the administrator username and password when prompted. If you haven't changed these, they may be listed in your router documentation or on a label on the router itself.",
+        "description": "",
+        "completed": false
+      },
+      {
+        "title": "3. Once logged in, navigate to the wireless settings page. This is usually found under the \"Wireless\" or \"WLAN\" tab.",
+        "description": "",
+        "completed": false
+      },
+      {
+        "title": "4. Look for a section related to security protocols. Here you should see options for WPA (Wi-Fi Protected Access) and possibly WPA2/WPA3.",
+        "description": "",
+        "completed": false
+      },
+      {
+        "title": "5. Check which encryption standard your router is currently using. It should be displayed clearly in the interface, often with a label next to the \"Security Mode\" or similar setting.",
+        "description": "",
+        "completed": false
+      },
+      {
+        "title": "6. If you'd like to change the encryption standard, ensure all devices connected to the network support the new standard before making the change. Then, update the security settings accordingly and save any changes made.",
+        "description": "",
+        "completed": false
+      },
+      {
+        "title": "7. After updating the security settings, reconnect any devices that were previously disconnected due to the change. Once they have successfully reconnected, you can confirm the new encryption standard is in use.",
+        "description": "",
+        "completed": false
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "session_id": "9b546fd4-4ee2-45c6-9085-37b335f4518b",
+    "user_id": "user-001",
+    "timestamp": "2026-01-28T14:56:31.730754",
+    "user_message": "hii",
+    "agent_response": "Please follow the steps below to troubleshoot your issue:",
+    "intent_category": "general_inquiry",
+    "steps": [
+      {
+        "title": "1. Greet the user",
+        "description": "\"Hello, welcome to [ISP] technical support. I'm here to help you with your issue. Could you please provide more details about what you're experiencing, such as a specific error message or symptom?\"",
+        "completed": false
+      },
+      {
+        "title": "2. Ask for connection information",
+        "description": "\"What type of connection do you have with us (DSL, Fiber, Cable)? Also, can you tell me the exact model number of your router or modem?\"",
+        "completed": false
+      },
+      {
+        "title": "3. Check connectivity",
+        "description": "\"Let's start by checking your internet connection. Can you please try restarting your device(s) and see if that resolves the issue? This includes your computer, phone, and any other devices connected to your network.\"",
+        "completed": false
+      },
+      {
+        "title": "4. Test your connection",
+        "description": "\"If the problem persists, I recommend running a speed test to check if your connection is stable and meeting the expected speeds. You can find this tool on our website ([ISP] Speed Test).\"",
+        "completed": false
+      },
+      {
+        "title": "5. Check for outages or maintenance",
+        "description": "\"There might be an issue with our network affecting your service. Let me check for any reported outages or scheduled maintenance in your area.\"",
+        "completed": false
+      },
+      {
+        "title": "6. Troubleshoot specific issues",
+        "description": "\"Based on the information you've provided, I can suggest some troubleshooting steps tailored to your situation, such as resetting your router, checking your firewall settings, or repairing network connections.\"",
+        "completed": false
+      },
+      {
+        "title": "7. Escalate if necessary",
+        "description": "\"If we cannot resolve the issue together, I will be happy to provide further assistance by escalating the ticket to our advanced support team for a more in-depth investigation.\"",
+        "completed": false
+      },
+      {
+        "title": "8. Provide additional resources",
+        "description": "\"Additionally, you can refer to our knowledge base articles and user guides available on our website for self-help solutions to common issues. Just let me know if there's anything specific you need assistance with.\"",
+        "completed": false
+      },
+      {
+        "title": "9. Follow up",
+        "description": "\"I will keep you updated on any progress made during the troubleshooting process. If you have any questions or concerns, please don't hesitate to ask.\"",
+        "completed": false
+      }
+    ]
   }
 ]

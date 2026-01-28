@@ -234,10 +234,9 @@ function ChatInterfaceContent() {
           )}
 
           {/* Live diagnostics */}
-          {(currentPhase === 'diagnostics' || diagnosticResults.length > 0) &&
+          {(currentPhase === 'diagnostics' || (diagnosticResults.length > 0 && currentPhase !== 'engineer_assigned')) &&
             currentPhase !== 'feedback' &&
-            currentPhase !== 'closed' &&
-            currentPhase !== 'engineer_assigned' && (
+            currentPhase !== 'closed' && (
               <LiveDiagnostics
                 results={diagnosticResults}
                 progress={diagnosticProgress}
