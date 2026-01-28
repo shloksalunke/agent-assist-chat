@@ -42,6 +42,7 @@ class ChatResponse(BaseModel):
     reply: str
     intent_category: str = "unknown"
     steps: List[dict] = []
+    conversation_id: int = None  # For feedback submission
 
 class FeedbackResponse(BaseModel):
     success: bool
@@ -199,7 +200,8 @@ Provide troubleshooting steps in a numbered list format. Be concise and clear. E
             "success": True,
             "reply": greeting,
             "intent_category": intent_category,
-            "steps": steps
+            "steps": steps,
+            "conversation_id": conversation_id
         }
 
     except requests.exceptions.RequestException as e:

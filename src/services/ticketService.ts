@@ -8,7 +8,8 @@ export async function createTicket(
   userId: string,
   category: IntentCategory,
   description: string,
-  priority: TicketPriority = 'medium'
+  priority: TicketPriority = 'medium',
+  conversationId?: number
 ): Promise<Ticket> {
   // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 300));
@@ -16,6 +17,7 @@ export async function createTicket(
   const ticket: Ticket = {
     id: `TKT-${Date.now().toString(36).toUpperCase()}`,
     userId,
+    conversationId,
     status: 'open',
     priority,
     category,

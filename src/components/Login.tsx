@@ -24,13 +24,11 @@ export function Login() {
   };
 
   return (
-    <div className="min-h-screen gradient-hero flex items-center justify-center p-4">
-      {/* Animated background elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-primary/10 rounded-full blur-3xl animate-pulse-soft" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-secondary/10 rounded-full blur-3xl animate-pulse-soft" style={{ animationDelay: '1s' }} />
-      </div>
-
+    <div className="min-h-screen flex items-center justify-center p-4 neural-network overflow-hidden">
+      {/* Animated orbs */}
+      <div className="orb orb-1"></div>
+      <div className="orb orb-2"></div>
+      
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -42,61 +40,63 @@ export function Login() {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.5 }}
-          className="text-center mb-8"
+          className="text-center mb-10"
         >
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl gradient-accent shadow-glow-accent mb-4">
-            <Wifi className="w-8 h-8 text-white" />
+          <div className="inline-flex items-center justify-center w-24 h-24 rounded-3xl gradient-primary shadow-2xl shadow-purple-500/30 mb-6 p-2 hover-lift">
+            <div className="w-full h-full rounded-2xl bg-black/20 backdrop-blur-sm flex items-center justify-center">
+              <Wifi className="w-10 h-10 text-white" />
+            </div>
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2">ISP Connect</h1>
-          <p className="text-white/70">AI-Powered Customer Support</p>
+          <h1 className="text-4xl font-bold text-white mb-2">ISP Connect</h1>
+          <p className="text-gray-300">AI-Powered Customer Support</p>
         </motion.div>
 
-        {/* Login card */}
+        {/* Login card - Glassmorphic panel */}
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.3, duration: 0.5 }}
-          className="glass rounded-2xl p-8 shadow-xl"
+          className="glass rounded-3xl p-8 shadow-2xl"
         >
           <div className="mb-6">
-            <h2 className="text-2xl font-semibold text-foreground mb-1">Welcome back</h2>
-            <p className="text-muted-foreground">Sign in to access support</p>
+            <h2 className="text-2xl font-semibold text-white mb-1">Access Portal</h2>
+            <p className="text-gray-300">Sign in to access support</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-foreground">Email</Label>
+              <Label htmlFor="email" className="text-white">Email</Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <Input
                   id="email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
-                  className="pl-10 h-12 bg-background/50"
+                  className="pl-10 h-12 glass-light border-0 focus:ring-2 focus:ring-purple-500 transition-all text-white placeholder-gray-400"
                   required
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-foreground">Password</Label>
+              <Label htmlFor="password" className="text-white">Password</Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="pl-10 pr-10 h-12 bg-background/50"
+                  className="pl-10 pr-10 h-12 glass-light border-0 focus:ring-2 focus:ring-purple-500 transition-all text-white placeholder-gray-400"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
@@ -107,7 +107,7 @@ export function Login() {
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="flex items-center gap-2 text-destructive text-sm bg-destructive/10 rounded-lg p-3"
+                className="flex items-center gap-2 text-red-400 text-sm bg-red-500/10 rounded-xl p-3 border border-red-500/20"
               >
                 <AlertCircle className="w-4 h-4 flex-shrink-0" />
                 <span>{error}</span>
@@ -117,7 +117,7 @@ export function Login() {
             <Button
               type="submit"
               disabled={isLoading}
-              className="w-full h-12 text-base font-medium gradient-primary hover:opacity-90 transition-opacity"
+              className="w-full h-12 text-base font-medium gradient-primary shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 transition-all duration-300 hover-lift"
             >
               {isLoading ? (
                 <span className="flex items-center gap-2">
@@ -135,10 +135,10 @@ export function Login() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
-            className="mt-6 pt-6 border-t border-border"
+            className="mt-6 pt-6 border-t border-white/10"
           >
-            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-              <Shield className="w-4 h-4 text-secondary" />
+            <div className="flex items-center justify-center gap-2 text-sm text-gray-400">
+              <Shield className="w-4 h-4 text-cyan-400" />
               <span>Secured with Model Context Protocol</span>
             </div>
           </motion.div>
@@ -150,7 +150,7 @@ export function Login() {
             transition={{ delay: 0.6 }}
             className="mt-4 text-center"
           >
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-gray-500">
               Demo: demo@ispconnect.com / demo123
             </p>
           </motion.div>
@@ -161,10 +161,10 @@ export function Login() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.7 }}
-          className="mt-8 flex items-center justify-center gap-6 text-white/60 text-sm"
+          className="mt-8 flex items-center justify-center gap-6 text-gray-400 text-sm"
         >
           <span className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
+            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
             AI Agents Active
           </span>
           <span>•</span>

@@ -4,120 +4,54 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Premium Blue/Teal Theme */
+/* Futuristic Glassmorphic Theme */
 
 @layer base {
   :root {
-    --background: 210 25% 97%;
-    --foreground: 220 30% 15%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 220 30% 15%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 220 30% 15%;
-
-    --primary: 210 100% 45%;
+    /* Dark gradient background */
+    --background: 240 10% 3%;
+    --foreground: 0 0% 98%;
+    
+    /* Glassmorphic surfaces */
+    --card: 0 0% 100% / 5%;
+    --card-foreground: 0 0% 98%;
+    
+    --popover: 0 0% 100% / 8%;
+    --popover-foreground: 0 0% 98%;
+    
+    /* Premium accents */
+    --primary: 270 80% 60%;
     --primary-foreground: 0 0% 100%;
-
-    --secondary: 175 65% 45%;
+    
+    --secondary: 210 100% 65%;
     --secondary-foreground: 0 0% 100%;
-
-    --muted: 210 20% 93%;
-    --muted-foreground: 215 16% 47%;
-
-    --accent: 175 65% 45%;
+    
+    --accent: 300 100% 50%;
     --accent-foreground: 0 0% 100%;
-
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-
-    --success: 152 69% 40%;
-    --success-foreground: 0 0% 100%;
-
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 100%;
-
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 210 100% 45%;
-
-    --radius: 0.75rem;
-
-    /* Agent-specific colors */
-    --agent-conversational: 210 100% 45%;
-    --agent-diagnostic: 175 65% 45%;
-    --agent-analytics: 280 65% 55%;
-
-    /* Chat-specific tokens */
-    --chat-user-bg: 210 100% 45%;
-    --chat-agent-bg: 0 0% 100%;
-    --chat-system-bg: 210 20% 96%;
-
-    /* Gradient definitions */
-    --gradient-primary: linear-gradient(135deg, #3B82F6, #2563EB);
-    --gradient-accent: linear-gradient(135deg, #22D3EE, #06B6D4);
-    --gradient-hero: linear-gradient(135deg, #0F172A, #1E293B);
-    --gradient-glass: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
-    --gradient-diagnostic: linear-gradient(90deg, #22D3EE, #3B82F6);
-
-    /* Shadow definitions */
-    --shadow-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
-    --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.08), 0 2px 4px -2px rgba(15, 23, 42, 0.05);
-    --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.05);
-    --shadow-xl: 0 20px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.05);
-    --shadow-glow: 0 0 20px rgba(59, 130, 246, 0.3);
-    --shadow-glow-accent: 0 0 20px rgba(34, 211, 238, 0.3);
-
-    /* Sidebar tokens */
-    --sidebar-background: 220 30% 15%;
-    --sidebar-foreground: 0 0% 95%;
-    --sidebar-primary: 210 100% 55%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 30% 22%;
-    --sidebar-accent-foreground: 0 0% 95%;
-    --sidebar-border: 220 30% 25%;
-    --sidebar-ring: 210 100% 55%;
-  }
-
-  .dark {
-    --background: 220 15% 4%;
-    --foreground: 0 0% 95%;
-
-    --card: 220 20% 9%;
-    --card-foreground: 0 0% 95%;
-
-    --popover: 220 20% 9%;
-    --popover-foreground: 0 0% 95%;
-
-    --primary: 210 100% 55%;
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 175 65% 50%;
-    --secondary-foreground: 0 0% 100%;
-
-    --muted: 220 15% 15%;
-    --muted-foreground: 215 20% 65%;
-
-    --accent: 175 65% 50%;
-    --accent-foreground: 0 0% 100%;
-
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 0 0% 100%;
-
-    --success: 152 69% 45%;
-    --success-foreground: 0 0% 100%;
-
-    --warning: 38 92% 55%;
-    --warning-foreground: 0 0% 100%;
-
-    --border: 220 15% 12%;
-    --input: 220 15% 12%;
-    --ring: 210 100% 55%;
-
-    --chat-user-bg: 210 100% 50%;
-    --chat-agent-bg: 220 20% 9%;
-    --chat-system-bg: 220 20% 7%;
+    
+    --muted: 240 5% 20%;
+    --muted-foreground: 240 5% 65%;
+    
+    --border: 0 0% 100% / 10%;
+    --input: 0 0% 100% / 10%;
+    --ring: 270 80% 60%;
+    
+    --radius: 1rem;
+    
+    /* Agent colors */
+    --agent-conversational: 270 80% 60%;
+    --agent-diagnostic: 180 80% 50%;
+    --agent-analytics: 300 100% 60%;
+    
+    /* Chat bubbles */
+    --chat-user-bg: 270 80% 60%;
+    --chat-agent-bg: 0 0% 100% / 8%;
+    --chat-system-bg: 0 0% 100% / 5%;
+    
+    /* Glow effects */
+    --glow-primary: 0 0 20px hsl(270, 80%, 60%, 0.5);
+    --glow-secondary: 0 0 20px hsl(210, 100%, 65%, 0.5);
+    --glow-accent: 0 0 20px hsl(300, 100%, 50%, 0.5);
   }
 }
 
@@ -128,127 +62,165 @@
 
   html {
     font-family: 'Inter', system-ui, sans-serif;
+    background: radial-gradient(ellipse at top, #2a0a4a 0%, #0f0621 30%, #02010a 70%);
+    background-attachment: fixed;
+    min-height: 100vh;
   }
 
   body {
     @apply bg-background text-foreground antialiased;
+    background: radial-gradient(ellipse at top, #2a0a4a 0%, #0f0621 30%, #02010a 70%);
+    background-attachment: fixed;
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+  }
+  
+  body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+      radial-gradient(ellipse at 10% 20%, rgba(92, 45, 170, 0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at 90% 80%, rgba(65, 105, 225, 0.15) 0%, transparent 50%);
+    z-index: -1;
+    pointer-events: none;
   }
 }
 
 @layer utilities {
+  /* Glassmorphism utility */
   .glass {
-    @apply bg-white/80 backdrop-blur-xl border border-white/20;
+    @apply bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl;
+    background: rgba(255, 255, 255, 0.05);
+    box-shadow: 
+      0 8px 32px 0 rgba(2, 2, 10, 0.37),
+      inset 0 2px 0 0 rgba(255, 255, 255, 0.05),
+      inset 0 0 20px 0 rgba(255, 255, 255, 0.02);
   }
-
-  .glass-dark {
-    @apply bg-black/40 backdrop-blur-xl border border-white/10;
+  
+  .glass-light {
+    @apply bg-white/10 backdrop-blur-2xl border border-white/20;
+    background: rgba(255, 255, 255, 0.1);
+    box-shadow: 
+      0 8px 32px 0 rgba(2, 2, 10, 0.37),
+      inset 0 2px 0 0 rgba(255, 255, 255, 0.1),
+      inset 0 0 20px 0 rgba(255, 255, 255, 0.05);
   }
-
+  
+  /* Glowing elements */
+  .glow {
+    box-shadow: var(--glow-primary);
+  }
+  
+  .glow-secondary {
+    box-shadow: var(--glow-secondary);
+  }
+  
+  .glow-accent {
+    box-shadow: var(--glow-accent);
+  }
+  
+  .glow-hover {
+    transition: box-shadow 0.3s ease;
+  }
+  
+  .glow-hover:hover {
+    box-shadow: var(--glow-primary);
+  }
+  
+  /* Gradient backgrounds */
   .gradient-primary {
-    background: var(--gradient-primary);
+    background: linear-gradient(135deg, hsl(270, 80%, 60%), hsl(300, 100%, 50%));
   }
-
+  
+  .gradient-secondary {
+    background: linear-gradient(135deg, hsl(210, 100%, 65%), hsl(180, 80%, 50%));
+  }
+  
   .gradient-accent {
-    background: var(--gradient-accent);
+    background: linear-gradient(135deg, hsl(300, 100%, 50%), hsl(270, 80%, 60%));
   }
-
-  .gradient-hero {
-    background: var(--gradient-hero);
+  
+  /* Animation utilities */
+  .animate-pulse-slow {
+    animation: pulse-slow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
-
-  .gradient-diagnostic {
-    background: var(--gradient-diagnostic);
-  }
-
-  .shadow-glow {
-    box-shadow: var(--shadow-glow);
-  }
-
-  .shadow-glow-accent {
-    box-shadow: var(--shadow-glow-accent);
-  }
-
-  .text-gradient-primary {
-    @apply bg-clip-text text-transparent;
-    background-image: var(--gradient-primary);
-  }
-
-  .text-gradient-accent {
-    @apply bg-clip-text text-transparent;
-    background-image: var(--gradient-accent);
-  }
-
-  /* Typing animation */
-  .typing-dot {
-    @apply w-2 h-2 rounded-full bg-muted-foreground;
-    animation: typing 1.4s infinite ease-in-out both;
-  }
-
-  .typing-dot:nth-child(1) { animation-delay: -0.32s; }
-  .typing-dot:nth-child(2) { animation-delay: -0.16s; }
-  .typing-dot:nth-child(3) { animation-delay: 0s; }
-
-  @keyframes typing {
-    0%, 80%, 100% { transform: scale(0.6); opacity: 0.5; }
-    40% { transform: scale(1); opacity: 1; }
-  }
-
-  /* Pulse glow animation */
-  .pulse-glow {
-    animation: pulse-glow 2s infinite;
-  }
-
-  @keyframes pulse-glow {
-    0%, 100% { box-shadow: 0 0 5px rgba(59, 130, 246, 0.3); }
-    50% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.6); }
-  }
-
-  /* Diagnostic progress animation */
-  .diagnostic-pulse {
-    animation: diagnostic-pulse 1.5s infinite;
-  }
-
-  @keyframes diagnostic-pulse {
+  
+  @keyframes pulse-slow {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.5; }
   }
-
-  /* Shimmer effect */
-  .shimmer {
-    background: linear-gradient(
-      90deg,
-      hsl(var(--muted)) 0%,
-      hsl(var(--background)) 50%,
-      hsl(var(--muted)) 100%
-    );
-    background-size: 200% 100%;
-    animation: shimmer 1.5s infinite;
+  
+  .hover-lift {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
   }
-
-  @keyframes shimmer {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
+  
+  .hover-lift:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
   }
-
-  /* Scan line effect for diagnostics */
-  .scan-line {
+  
+  /* Neural network animation */
+  .neural-network {
     position: relative;
     overflow: hidden;
   }
-
-  .scan-line::after {
-    content: '';
+  
+  .neural-network::before {
+    content: "";
     position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 2px;
-    background: var(--gradient-diagnostic);
-    animation: scan 2s infinite;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: 
+      radial-gradient(circle at 30% 30%, rgba(92, 45, 170, 0.1) 0%, transparent 15%),
+      radial-gradient(circle at 70% 70%, rgba(65, 105, 225, 0.1) 0%, transparent 15%),
+      repeating-linear-gradient(45deg, rgba(92, 45, 170, 0.05) 0px, rgba(92, 45, 170, 0.05) 1px, transparent 1px, transparent 11px),
+      repeating-linear-gradient(-45deg, rgba(65, 105, 225, 0.05) 0px, rgba(65, 105, 225, 0.05) 1px, transparent 1px, transparent 11px);
+    animation: neural-move 20s linear infinite;
+    z-index: -1;
   }
-
-  @keyframes scan {
-    0% { left: -100%; }
-    100% { left: 100%; }
+  
+  @keyframes neural-move {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(50px, 50px); }
+  }
+  
+  /* Orb effect */
+  .orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(60px);
+    opacity: 0.3;
+    z-index: -1;
+    animation: float 15s ease-in-out infinite;
+  }
+  
+  .orb-1 {
+    width: 300px;
+    height: 300px;
+    background: linear-gradient(135deg, #5c2daa, #4169e1);
+    top: 10%;
+    left: 5%;
+    animation-delay: 0s;
+  }
+  
+  .orb-2 {
+    width: 250px;
+    height: 250px;
+    background: linear-gradient(135deg, #4169e1, #0ff);
+    bottom: 15%;
+    right: 10%;
+    animation-delay: -5s;
+  }
+  
+  @keyframes float {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(20px, 20px) scale(1.1); }
   }
 }

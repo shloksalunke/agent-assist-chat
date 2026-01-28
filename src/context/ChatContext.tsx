@@ -98,7 +98,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         return {
           reply: data.reply,
           intent_category: data.intent_category,
-          steps: data.steps
+          steps: data.steps,
+          conversation_id: data.conversation_id
         };
       } else {
         throw new Error('LLM response not successful');
@@ -108,7 +109,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       return {
         reply: "I'm having trouble processing your request right now. Could you please try again?",
         intent_category: "unknown",
-        steps: []
+        steps: [],
+        conversation_id: undefined
       };
     }
   }, [sessionId, user]);
@@ -180,8 +182,14 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         setCurrentPhase('troubleshooting');
         setCurrentIntent(llmResponse.intent_category as IntentCategory);
         
-        // Create a ticket for this issue
-        const ticket = await createTicket(user.id, llmResponse.intent_category as IntentCategory, content);
+        // Create a ticket for this issue with conversation_id
+        const ticket = await createTicket(
+          user.id, 
+          llmResponse.intent_category as IntentCategory, 
+          content,
+          'medium',
+          llmResponse.conversation_id
+        );
         setCurrentTicket(ticket);
         
         // Show only the greeting message, not the full LLM response
@@ -427,18 +435,20 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     if (!currentTicket) return;
 
     try {
-      // Submit feedback to backend
-      await fetch('http://localhost:8000/api/feedback', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          conversation_id: parseInt(currentTicket.id.split('-')[1]),
-          rating,
-          comment
-        })
-      });
+      // Submit feedback to backend using conversation_id from ticket
+      if (currentTicket.conversationId) {
+        await fetch('http://localhost:8000/api/feedback', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            conversation_id: currentTicket.conversationId,
+            rating,
+            comment
+          })
+        });
+      }
     } catch (error) {
       console.error('Error submitting feedback:', error);
     }

@@ -74,6 +74,7 @@ export interface KnowledgeBaseArticle {
 export interface Ticket {
   id: string;
   userId: string;
+  conversationId?: number; // Database conversation_id for feedback submission
   status: TicketStatus;
   priority: TicketPriority;
   category: IntentCategory;

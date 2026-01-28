@@ -10,28 +10,31 @@ interface AgentBadgeProps {
   size?: 'sm' | 'md' | 'lg';
 }
 
-const agentConfig: Record<AgentType, { label: string; icon: typeof Bot; colorClass: string }> = {
+const agentConfig: Record<AgentType, { label: string; icon: typeof Bot; colorClass: string; glowClass: string }> = {
   conversational: {
     label: 'Conversational Agent',
     icon: Bot,
     colorClass: 'bg-agent-conversational',
+    glowClass: 'shadow-purple-500/30',
   },
   diagnostic: {
     label: 'Diagnostic Agent',
     icon: Cpu,
     colorClass: 'bg-agent-diagnostic',
+    glowClass: 'shadow-cyan-500/30',
   },
   analytics: {
     label: 'Analytics Agent',
     icon: BarChart3,
     colorClass: 'bg-agent-analytics',
+    glowClass: 'shadow-pink-500/30',
   },
 };
 
 const sizeClasses = {
-  sm: 'text-xs px-2 py-1 gap-1',
-  md: 'text-sm px-3 py-1.5 gap-1.5',
-  lg: 'text-base px-4 py-2 gap-2',
+  sm: 'text-xs px-2 py-1 gap-1 rounded-lg',
+  md: 'text-sm px-3 py-1.5 gap-1.5 rounded-xl',
+  lg: 'text-base px-4 py-2 gap-2 rounded-2xl',
 };
 
 const iconSizes = {
@@ -49,10 +52,11 @@ export function AgentBadge({ type, isActive = false, size = 'md' }: AgentBadgePr
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       className={cn(
-        'inline-flex items-center rounded-full font-medium text-white',
+        'inline-flex items-center font-medium text-white shadow-lg transition-all duration-300 hover-lift',
         sizeClasses[size],
         config.colorClass,
-        isActive && 'shadow-glow animate-pulse-soft'
+        isActive && config.glowClass,
+        isActive && 'animate-pulse-slow'
       )}
     >
       <Icon className={iconSizes[size]} />

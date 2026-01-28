@@ -27,16 +27,16 @@ export function FeedbackForm({ onSubmit }: FeedbackFormProps) {
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="mt-4 p-5 bg-card border border-border rounded-xl"
+      className="mt-4 p-5 glass rounded-2xl shadow-lg"
     >
       <div className="flex items-center gap-2 mb-4">
-        <MessageSquare className="w-5 h-5 text-primary" />
-        <h4 className="font-semibold text-foreground">Share Your Feedback</h4>
+        <MessageSquare className="w-5 h-5 text-cyan-400" />
+        <h4 className="font-semibold text-white">Share Your Feedback</h4>
       </div>
 
       {/* Star rating */}
       <div className="mb-4">
-        <p className="text-sm text-muted-foreground mb-3">How was your support experience?</p>
+        <p className="text-sm text-gray-300 mb-3">How was your support experience?</p>
         <div className="flex gap-2">
           {[1, 2, 3, 4, 5].map((star) => (
             <button
@@ -48,10 +48,10 @@ export function FeedbackForm({ onSubmit }: FeedbackFormProps) {
             >
               <Star
                 className={cn(
-                  'w-8 h-8 transition-colors',
+                  'w-8 h-8 transition-colors duration-200',
                   (hoveredRating || rating) >= star
-                    ? 'fill-warning text-warning'
-                    : 'fill-muted text-muted-foreground'
+                    ? 'fill-yellow-400 text-yellow-400 shadow-md shadow-yellow-500/30'
+                    : 'fill-gray-700 text-gray-600'
                 )}
               />
             </button>
@@ -61,7 +61,7 @@ export function FeedbackForm({ onSubmit }: FeedbackFormProps) {
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="text-sm text-muted-foreground mt-2"
+            className="text-sm text-gray-300 mt-2"
           >
             {rating === 5 && "Excellent! We're thrilled to hear that! 🎉"}
             {rating === 4 && "Great! Thanks for the positive feedback! 😊"}
@@ -74,12 +74,12 @@ export function FeedbackForm({ onSubmit }: FeedbackFormProps) {
 
       {/* Optional comment */}
       <div className="mb-4">
-        <p className="text-sm text-muted-foreground mb-2">Any additional comments? (optional)</p>
+        <p className="text-sm text-gray-300 mb-2">Any additional comments? (optional)</p>
         <Textarea
           value={comment}
           onChange={(e) => setComment(e.target.value)}
           placeholder="Tell us more about your experience..."
-          className="resize-none h-24"
+          className="resize-none h-24 glass-light border-0 focus:ring-2 focus:ring-purple-500 transition-all text-white placeholder-gray-400"
         />
       </div>
 
@@ -87,7 +87,7 @@ export function FeedbackForm({ onSubmit }: FeedbackFormProps) {
       <Button
         onClick={handleSubmit}
         disabled={rating === 0 || isSubmitting}
-        className="w-full gap-2 gradient-primary hover:opacity-90"
+        className="w-full gap-2 gradient-primary shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 transition-all duration-300 hover-lift"
       >
         <Send className="w-4 h-4" />
         {isSubmitting ? 'Submitting...' : 'Submit Feedback'}
