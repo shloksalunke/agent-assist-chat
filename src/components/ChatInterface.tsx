@@ -61,7 +61,7 @@ function ChatMessage({ message, showSteps }: { message: Message; showSteps?: boo
 
         <div
           className={cn(
-            'inline-block rounded-2xl px-4 py-2.5 text-sm',
+            'inline-block rounded-2xl px-4 py-2.5 text-sm message-bubble',
             isUser
               ? 'bg-chat-user text-primary-foreground rounded-tr-sm'
               : 'bg-chat-agent border border-border text-foreground rounded-tl-sm'
@@ -82,7 +82,7 @@ function ChatMessage({ message, showSteps }: { message: Message; showSteps?: boo
         </div>
 
         {/* Timestamp */}
-        <p className={cn('text-xs text-muted-foreground mt-1', isUser && 'text-right')}>
+        <p className={cn('text-xs text-muted-foreground mt-1 msg-timestamp', isUser && 'text-right')}>
           {formatTime(message.timestamp)}
         </p>
 
@@ -134,6 +134,31 @@ function ChatInterfaceContent() {
     assignEngineer,
   } = useChat();
 
+  // Theme toggle state (persist across reloads using localStorage)
+  const [isCyberpunk, setIsCyberpunk] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('theme') === 'cyberpunk';
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      if (isCyberpunk) {
+        document.documentElement.setAttribute('data-theme', 'cyberpunk');
+        localStorage.setItem('theme', 'cyberpunk');
+      } else {
+        document.documentElement.removeAttribute('data-theme');
+        localStorage.setItem('theme', 'default');
+      }
+    } catch (e) {
+      // ignore storage errors
+    }
+  }, [isCyberpunk]);
+
+  const toggleTheme = () => setIsCyberpunk(prev => !prev);
+
   const [inputValue, setInputValue] = useState('');
   const [isSending, setIsSending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -183,6 +208,10 @@ function ChatInterfaceContent() {
           <div>
             <h1 className="font-semibold text-foreground">ISP Connect Support</h1>
             <p className="text-xs text-muted-foreground">AI-Powered Assistance</p>
+            <div className="network-status mt-1">
+              <span className="dot" aria-hidden />
+              <span className="ml-2 text-xs">Online</span>
+            </div>
           </div>
         </div>
 
@@ -198,6 +227,14 @@ function ChatInterfaceContent() {
 
           {/* User info & logout */}
           <div className="flex items-center gap-3">
+            {/* Theme toggle button */}
+            <Button
+              onClick={toggleTheme}
+              className="btn mr-2"
+              variant="ghost"
+            >
+              {isCyberpunk ? 'Disable Cyberpunk Mode' : 'Enable Cyberpunk Mode'}
+            </Button>
             <div className="text-right">
               <p className="text-sm font-medium text-foreground">{user?.name}</p>
               <p className="text-xs text-muted-foreground">{user?.plan}</p>
@@ -306,7 +343,7 @@ function ChatInterfaceContent() {
                   : 'Type your message...'
               }
               disabled={currentPhase === 'closed' || isSending}
-              className="flex-1 h-12 bg-background"
+              className="flex-1 h-12 bg-background chat-input"
             />
             <Button
               onClick={handleSend}

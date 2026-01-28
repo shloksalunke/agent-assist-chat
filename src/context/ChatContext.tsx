@@ -39,6 +39,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [diagnosticProgress, setDiagnosticProgress] = useState<Record<string, number>>({});
   const [currentIntent, setCurrentIntent] = useState<IntentCategory | null>(null);
   const [sessionId] = useState<string>(() => v4());
+  const greetedRef = React.useRef(false);
 
   const addMessage = useCallback((message: Omit<Message, 'id' | 'timestamp'>) => {
     const fullMessage: Message = {
@@ -187,8 +188,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         await addAgentMessage(
           llmResponse.reply,
           { 
-            requiresAction: true, 
-            actionType: 'troubleshooting',
+            requiresAction: true,
             troubleshootingSteps: stepsWithIds
           }
         );
@@ -303,26 +303,24 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   }, [user, mcpContext, currentPhase, currentSteps, currentTicket, addMessage, addAgentMessage, addSystemMessage, setActiveAgent, fetchLLMResponse, sessionId, assignEngineer]);
 
   const markStepComplete = useCallback((stepId: string) => {
-    setCurrentSteps(prev => 
-      prev.map(step => 
-        step.id === stepId ? { ...step, completed: true } : step
-      ) // Check if all steps are completed
-    const updatedSteps = currentSteps.map(step => 
-      step.id === stepId ? { ...step, completed: true } : step
-    );
-    
-    const allCompleted = updatedSteps.every(step => step.completed);
-    
-    if (allCompleted && currentPhase === 'troubleshooting') {
-      setCurrentPhase('resolution_check');
-      addMessage({
-        role: 'agent',
-        content: 'Have you completed all the troubleshooting steps? Is your issue resolved?',
-        agentType: mcpContext?.agentOrchestration.activeAgent || 'conversational',
-        metadata: { requiresAction: true, actionType: 'resolution_check' }
-      });
-    }
-  }, [currentSteps, currentPhase, addMessage, mcpContext]);
+    setCurrentSteps(prev => {
+      const updated = prev.map(step => (step.id === stepId ? { ...step, completed: true } : step));
+
+      const allCompleted = updated.every(s => s.completed);
+
+      if (allCompleted && currentPhase === 'troubleshooting') {
+        setCurrentPhase('resolution_check');
+        addMessage({
+          role: 'agent',
+          content: 'Have you completed all the troubleshooting steps? Is your issue resolved?',
+          agentType: mcpContext?.agentOrchestration.activeAgent || 'conversational',
+          metadata: { requiresAction: true, actionType: 'resolution_check' }
+        });
+      }
+
+      return updated;
+    });
+  }, [currentPhase, addMessage, mcpContext]);
 
   const confirmResolution = useCallback(async (resolved: boolean) => {
     if (!currentTicket) return;
@@ -471,16 +469,18 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     setDiagnosticResults([]);
     setDiagnosticProgress({});
     setCurrentIntent(null);
+    greetedRef.current = false;
   }, []);
 
   // Send initial greeting when chat loads
   React.useEffect(() => {
-    if (user && mcpContext && messages.length === 0) {
+    if (user && mcpContext && messages.length === 0 && !greetedRef.current) {
       const greeting = async () => {
         await new Promise(resolve => setTimeout(resolve, 500));
         await addAgentMessage(
           `Hi ${user.name}! 👋 Welcome to ISP Connect Support.\n\nI'm here to help you troubleshoot your internet connection issues. What seems to be the problem with your connection today?\n\nYou can tell me things like:\n• My internet is not working\n• The speed is very slow\n• My device won't connect to WiFi`
         );
+        greetedRef.current = true;
       };
       greeting();
     }

@@ -27,14 +27,14 @@ class ConversationDB:
             )
         ''')
         
-        # Create troubleshooting steps table
+        # Create troubleshooting steps table (allow nullable columns for migrations)
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS troubleshooting_steps (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 conversation_id INTEGER NOT NULL,
                 step_order INTEGER NOT NULL,
-                title TEXT NOT NULL,
-                description TEXT NOT NULL,
+                title TEXT,
+                description TEXT,
                 completed BOOLEAN DEFAULT FALSE,
                 FOREIGN KEY (conversation_id) REFERENCES conversations (id)
             )
@@ -53,6 +53,20 @@ class ConversationDB:
         ''')
         
         conn.commit()
+
+        # Lightweight migration: ensure troubleshooting_steps has expected columns
+        try:
+            cursor.execute("PRAGMA table_info(troubleshooting_steps)")
+            existing = [row[1] for row in cursor.fetchall()]
+            if 'title' not in existing:
+                cursor.execute("ALTER TABLE troubleshooting_steps ADD COLUMN title TEXT DEFAULT ''")
+            if 'description' not in existing:
+                cursor.execute("ALTER TABLE troubleshooting_steps ADD COLUMN description TEXT DEFAULT ''")
+            conn.commit()
+        except Exception as e:
+            # Log and continue; do not prevent app startup
+            print('DB migration warning:', e)
+
         conn.close()
     
     def log_conversation(self, session_id: str, user_id: str, user_message: str, 
