@@ -1,108 +1,94 @@
-import sqlite3
+import json
+import os
 from datetime import datetime
-from typing import List, Tuple
+from typing import List, Dict, Any
 
 class ConversationDB:
-    def __init__(self, db_path: str = "conversations.db"):
+    def __init__(self, db_path: str = "conversations.json"):
         self.db_path = db_path
         self.init_db()
     
     def init_db(self):
-        """Initialize the database with required tables"""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        # Create conversations table
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS conversations (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                session_id TEXT NOT NULL,
-                user_id TEXT,
-                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-                user_message TEXT,
-                agent_response TEXT,
-                intent_category TEXT
-            )
-        """)
-        
-        # Create troubleshooting_steps table
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS troubleshooting_steps (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                conversation_id INTEGER,
-                step_order INTEGER,
-                step_title TEXT,
-                step_description TEXT,
-                completed BOOLEAN DEFAULT FALSE,
-                FOREIGN KEY (conversation_id) REFERENCES conversations (id)
-            )
-        """)
-        
-        conn.commit()
-        conn.close()
+        """Initialize the JSON database"""
+        if not os.path.exists(self.db_path):
+            with open(self.db_path, 'w') as f:
+                json.dump([], f)
     
     def log_conversation(self, session_id: str, user_id: str, user_message: str, 
-                        agent_response: str, intent_category: str = None) -> int:
+                        agent_response: str, intent_category: str = None, steps: List[Dict] = None) -> int:
         """Log a conversation entry and return the conversation ID"""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
+        # Read existing data
+        if os.path.exists(self.db_path):
+            with open(self.db_path, 'r') as f:
+                conversations = json.load(f)
+        else:
+            conversations = []
         
-        cursor.execute("""
-            INSERT INTO conversations 
-            (session_id, user_id, user_message, agent_response, intent_category)
-            VALUES (?, ?, ?, ?, ?)
-        """, (session_id, user_id, user_message, agent_response, intent_category))
+        # Create new conversation entry
+        conversation_entry = {
+            "id": len(conversations) + 1,
+            "session_id": session_id,
+            "user_id": user_id,
+            "timestamp": datetime.now().isoformat(),
+            "user_message": user_message,
+            "agent_response": agent_response,
+            "intent_category": intent_category,
+            "steps": steps or []
+        }
         
-        conversation_id = cursor.lastrowid
-        conn.commit()
-        conn.close()
+        conversations.append(conversation_entry)
         
-        return conversation_id
+        # Write back to file
+        with open(self.db_path, 'w') as f:
+            json.dump(conversations, f, indent=2)
+        
+        return conversation_entry["id"]
     
-    def log_troubleshooting_steps(self, conversation_id: int, steps: List[dict]):
+    def log_troubleshooting_steps(self, conversation_id: int, steps: List[Dict]):
         """Log troubleshooting steps for a conversation"""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
+        # Read existing data
+        if os.path.exists(self.db_path):
+            with open(self.db_path, 'r') as f:
+                conversations = json.load(f)
+        else:
+            return
         
-        for i, step in enumerate(steps):
-            cursor.execute("""
-                INSERT INTO troubleshooting_steps 
-                (conversation_id, step_order, step_title, step_description)
-                VALUES (?, ?, ?, ?)
-            """, (conversation_id, i+1, step.get('title', ''), step.get('description', '')))
+        # Find the conversation and update steps
+        for conv in conversations:
+            if conv["id"] == conversation_id:
+                conv["steps"] = steps
+                break
         
-        conn.commit()
-        conn.close()
+        # Write back to file
+        with open(self.db_path, 'w') as f:
+            json.dump(conversations, f, indent=2)
     
-    def mark_step_complete(self, step_id: int):
+    def mark_step_complete(self, conversation_id: int, step_index: int):
         """Mark a troubleshooting step as complete"""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
+        # Read existing data
+        if os.path.exists(self.db_path):
+            with open(self.db_path, 'r') as f:
+                conversations = json.load(f)
+        else:
+            return
         
-        cursor.execute("""
-            UPDATE troubleshooting_steps 
-            SET completed = TRUE 
-            WHERE id = ?
-        """, (step_id,))
+        # Find the conversation and mark step as complete
+        for conv in conversations:
+            if conv["id"] == conversation_id and step_index < len(conv.get("steps", [])):
+                conv["steps"][step_index]["completed"] = True
+                break
         
-        conn.commit()
-        conn.close()
+        # Write back to file
+        with open(self.db_path, 'w') as f:
+            json.dump(conversations, f, indent=2)
     
-    def get_conversation_history(self, session_id: str) -> List[Tuple]:
+    def get_conversation_history(self, session_id: str) -> List[Dict]:
         """Retrieve conversation history for a session"""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
+        if os.path.exists(self.db_path):
+            with open(self.db_path, 'r') as f:
+                conversations = json.load(f)
+            
+            # Filter by session_id
+            return [conv for conv in conversations if conv["session_id"] == session_id]
         
-        cursor.execute("""
-            SELECT * FROM conversations 
-            WHERE session_id = ? 
-            ORDER BY timestamp ASC
-        """, (session_id,))
-        
-        history = cursor.fetchall()
-        conn.close()
-        
-        return history
-
-# Initialize the database
-db = ConversationDB()
+        return []

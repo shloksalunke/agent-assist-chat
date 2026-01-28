@@ -3,9 +3,9 @@ from pydantic import BaseModel
 import requests
 from fastapi.middleware.cors import CORSMiddleware
 import logging
-from typing import Any, List
-import sqlite3
-from datetime import datetime
+from typing import Any, List, Dict
+import json
+import os
 
 app = FastAPI(
     title="Local LLM API",
@@ -25,6 +25,8 @@ app.add_middleware(
 OLLAMA_URL = "http://localhost:11434/api/generate"
 MODEL_NAME = "mistral4bit"
 
+# JSON database file path
+CONVERSATIONS_FILE = "conversations.json"
 
 class ChatRequest(BaseModel):
     message: str
@@ -39,87 +41,49 @@ class ChatResponse(BaseModel):
     steps: List[dict] = []
 
 
-class ConversationDB:
-    def __init__(self, db_path: str = "conversations.db"):
-        self.db_path = db_path
-        self.init_db()
-    
-    def init_db(self):
-        """Initialize the database with required tables"""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        # Create conversations table
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS conversations (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                session_id TEXT NOT NULL,
-                user_id TEXT,
-                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-                user_message TEXT,
-                agent_response TEXT,
-                intent_category TEXT
-            )
-        """)
-        
-        # Create troubleshooting_steps table
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS troubleshooting_steps (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                conversation_id INTEGER,
-                step_order INTEGER,
-                step_title TEXT,
-                step_description TEXT,
-                completed BOOLEAN DEFAULT FALSE,
-                FOREIGN KEY (conversation_id) REFERENCES conversations (id)
-            )
-        """)
-        
-        conn.commit()
-        conn.close()
-    
-    def log_conversation(self, session_id: str, user_id: str, user_message: str, 
-                        agent_response: str, intent_category: str = None) -> int:
-        """Log a conversation entry and return the conversation ID"""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        cursor.execute("""
-            INSERT INTO conversations 
-            (session_id, user_id, user_message, agent_response, intent_category)
-            VALUES (?, ?, ?, ?, ?)
-        """, (session_id, user_id, user_message, agent_response, intent_category))
-        
-        conversation_id = cursor.lastrowid
-        conn.commit()
-        conn.close()
-        
-        return conversation_id
-    
-    def log_troubleshooting_steps(self, conversation_id: int, steps: List[dict]):
-        """Log troubleshooting steps for a conversation"""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        for i, step in enumerate(steps):
-            cursor.execute("""
-                INSERT INTO troubleshooting_steps 
-                (conversation_id, step_order, step_title, step_description)
-                VALUES (?, ?, ?, ?)
-            """, (conversation_id, i+1, step.get('title', ''), step.get('description', '')))
-        
-        conn.commit()
-        conn.close()
+def init_db():
+    """Initialize the JSON database"""
+    if not os.path.exists(CONVERSATIONS_FILE):
+        with open(CONVERSATIONS_FILE, 'w') as f:
+            json.dump([], f)
 
-# Initialize the database
-db = ConversationDB()
+
+def log_conversation(session_id: str, user_id: str, user_message: str, 
+                    agent_response: str, intent_category: str = None, steps: List[Dict] = None) -> int:
+    """Log a conversation entry and return the conversation ID"""
+    # Read existing data
+    if os.path.exists(CONVERSATIONS_FILE):
+        with open(CONVERSATIONS_FILE, 'r') as f:
+            conversations = json.load(f)
+    else:
+        conversations = []
+    
+    # Create new conversation entry
+    conversation_entry = {
+        "id": len(conversations) + 1,
+        "session_id": session_id,
+        "user_id": user_id,
+        "timestamp": __import__('datetime').datetime.now().isoformat(),
+        "user_message": user_message,
+        "agent_response": agent_response,
+        "intent_category": intent_category,
+        "steps": steps or []
+    }
+    
+    conversations.append(conversation_entry)
+    
+    # Write back to file
+    with open(CONVERSATIONS_FILE, 'w') as f:
+        json.dump(conversations, f, indent=2)
+    
+    return conversation_entry["id"]
 
 
 def parse_llm_response_for_steps(response_text: str) -> List[dict]:
     """Parse LLM response to extract troubleshooting steps"""
     steps = []
     
-    # Simple parsing logic - in a real implementation, you might use more sophisticated NLP
+    # Split response into lines
     lines = response_text.split('\n')
     current_step = None
     
@@ -161,7 +125,7 @@ def parse_llm_response_for_steps(response_text: str) -> List[dict]:
     # If no steps found, treat entire response as one step
     if not steps:
         steps.append({
-            'title': 'Troubleshooting Step',
+            'title': 'General Troubleshooting',
             'description': response_text,
             'completed': False
         })
@@ -236,21 +200,22 @@ def chat(req: ChatRequest):
         elif "device" in message_lower or "phone" in message_lower or "computer" in message_lower:
             intent_category = "device_problems"
         
+        # Create a simplified greeting message instead of full LLM response
+        greeting = "Please follow the steps below to troubleshoot your issue:"
+        
         # Log conversation
-        conversation_id = db.log_conversation(
+        conversation_id = log_conversation(
             req.session_id, 
             req.user_id, 
             req.message, 
-            reply, 
-            intent_category
+            greeting, 
+            intent_category,
+            steps
         )
-        
-        # Log steps
-        db.log_troubleshooting_steps(conversation_id, steps)
         
         return {
             "success": True,
-            "reply": reply,
+            "reply": greeting,
             "intent_category": intent_category,
             "steps": steps
         }
@@ -263,4 +228,7 @@ def chat(req: ChatRequest):
         raise
     except Exception as e:
         logging.exception("Unexpected error in /api/chat: %s", e)
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=502, detail="Internal server error")
+
+# Initialize the database when the app starts
+init_db()

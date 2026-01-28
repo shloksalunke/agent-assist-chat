@@ -141,7 +141,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         const ticket = await createTicket(user.id, llmResponse.intent_category as IntentCategory, content);
         setCurrentTicket(ticket);
         
-        // Show the LLM's actual response
+        // Show only the greeting message, not the full LLM response
         await addAgentMessage(
           llmResponse.reply,
           { 
