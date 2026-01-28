@@ -141,12 +141,18 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         const ticket = await createTicket(user.id, llmResponse.intent_category as IntentCategory, content);
         setCurrentTicket(ticket);
         
+        // Show the LLM's actual response
         await addAgentMessage(
-          `I understand you're having an issue. Please follow the troubleshooting steps shown below and mark each step as complete.`
+          llmResponse.reply,
+          { 
+            requiresAction: true, 
+            actionType: 'troubleshooting',
+            troubleshootingSteps: stepsWithIds
+          }
         );
       } else {
         await addAgentMessage(
-          "I'm not sure I understand your issue. Could you please describe your internet problem in more detail? For example:\n\n" +
+          llmResponse.reply || "I'm not sure I understand your issue. Could you please describe your internet problem in more detail? For example:\n\n" +
           "• My internet is not working\n" +
           "• The speed is very slow\n" +
           "• My device won't connect to WiFi"
@@ -198,9 +204,16 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       }
     }
     else if (currentPhase === 'troubleshooting') {
-      // During troubleshooting, guide user to complete steps
+      // Get response from LLM for follow-up questions
+      setIsTyping(true);
+      const llmResponse = await fetchLLMResponse(content);
+      setIsTyping(false);
+      
       await addAgentMessage(
-        "Please follow the troubleshooting steps shown below and mark each step as complete. Let me know if you need clarification on any step."
+        llmResponse.reply,
+        { 
+          troubleshootingSteps: currentSteps 
+        }
       );
     }
     else {
