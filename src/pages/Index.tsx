@@ -1,6 +1,7 @@
 import { useAuth, AuthProvider } from '@/context/AuthContext';
 import { Login } from '@/components/Login';
 import { ChatInterface } from '@/components/ChatInterface';
+import NotFound from './NotFound';
 
 function AppContent() {
   const { isAuthenticated } = useAuth();
