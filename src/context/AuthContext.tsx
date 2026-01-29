@@ -16,32 +16,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock user database
-const mockUsers: Record<string, { password: string; user: User }> = {
-  'demo@ispconnect.com': {
-    password: 'demo123',
-    user: {
-      id: 'user-001',
-      email: 'demo@ispconnect.com',
-      name: 'Alex Johnson',
-      accountNumber: 'ACC-2024-78456',
-      plan: 'Premium Fiber 500Mbps',
-      deviceOS: 'Windows',
-    },
-  },
-  'john@example.com': {
-    password: 'john123',
-    user: {
-      id: 'user-002',
-      email: 'john@example.com',
-      name: 'John Smith',
-      accountNumber: 'ACC-2024-12345',
-      plan: 'Standard Cable 100Mbps',
-      deviceOS: 'macOS',
-    },
-  },
-};
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [mcpContext, setMCPContext] = useState<MCPContext | null>(null);
@@ -74,26 +48,63 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
     
-    // Simulate authentication API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    try {
+      const response = await fetch('http://localhost:8000/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
 
-    const userRecord = mockUsers[email.toLowerCase()];
-    
-    if (userRecord && userRecord.password === password) {
+      if (!response.ok) {
+        throw new Error('Login failed');
+      }
+
+      const data = await response.json();
+      
+      // Get user details from the mock database
+      const mockUsers: Record<string, User> = {
+        'demo@ispconnect.com': {
+          id: 'user-001',
+          email: 'demo@ispconnect.com',
+          name: 'Alex Johnson',
+          accountNumber: 'ACC-2024-78456',
+          plan: 'Premium Fiber 500Mbps',
+          deviceOS: 'Windows',
+        },
+        'john@example.com': {
+          id: 'user-002',
+          email: 'john@example.com',
+          name: 'John Smith',
+          accountNumber: 'ACC-2024-12345',
+          plan: 'Standard Cable 100Mbps',
+          deviceOS: 'macOS',
+        },
+      };
+
+      const authenticatedUser = mockUsers[email.toLowerCase()];
+      if (!authenticatedUser) {
+        throw new Error('User not found');
+      }
+
       console.log('[Auth] Login successful for:', email);
-      setUser(userRecord.user);
+      setUser(authenticatedUser);
       
       // Initialize MCP context after successful login
-      const context = initializeMCP(userRecord.user);
+      const context = initializeMCP(authenticatedUser);
       setMCPContext(context);
+      
+      // Store token in localStorage
+      localStorage.setItem('authToken', data.access_token);
       
       setIsLoading(false);
       return true;
+    } catch (error) {
+      console.log('[Auth] Login failed for:', email);
+      setIsLoading(false);
+      return false;
     }
-
-    console.log('[Auth] Login failed for:', email);
-    setIsLoading(false);
-    return false;
   }, [initializeMCP]);
 
   const logout = useCallback(() => {
@@ -101,6 +112,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     console.log('[MCP] Destroying session:', mcpContext?.sessionId);
     setUser(null);
     setMCPContext(null);
+    localStorage.removeItem('authToken');
   }, [user, mcpContext]);
 
   const updateMCPContext = useCallback((updates: Partial<MCPContext>) => {

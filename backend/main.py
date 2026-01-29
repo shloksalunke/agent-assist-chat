@@ -1,10 +1,12 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from pydantic import BaseModel
 import requests
 from fastapi.middleware.cors import CORSMiddleware
 import logging
 from typing import Any, List, Dict
 from database import ConversationDB
+from auth import get_current_user, generate_ticket_id
+from auth_routes import auth_router
 
 app = FastAPI(
     title="Local LLM API",
@@ -20,6 +22,9 @@ app.add_middleware(
     allow_methods=["*"],        # POST, OPTIONS sab allow
     allow_headers=["*"],
 )
+
+# Include auth routes
+app.include_router(auth_router)
 
 OLLAMA_URL = "http://localhost:11434/api/generate"
 MODEL_NAME = "mistral4bit"
@@ -102,7 +107,7 @@ def parse_llm_response_for_steps(response_text: str) -> List[dict]:
     return steps
 
 @app.post("/api/chat", response_model=ChatResponse)
-def chat(req: ChatRequest):
+def chat(req: ChatRequest, current_user = Depends(get_current_user)):
     if not req.message.strip():
         raise HTTPException(status_code=400, detail="Message cannot be empty")
 
@@ -186,6 +191,9 @@ Provide troubleshooting steps in a numbered list format. Be concise and clear. E
         # Create a simplified greeting message instead of full LLM response
         greeting = "Please follow the steps below to troubleshoot your issue:"
         
+        # Generate unique ticket ID for this session if not exists
+        ticket_id = generate_ticket_id()
+        
         # Log conversation to database
         conversation_id = db.log_conversation(
             req.session_id, 
@@ -215,7 +223,7 @@ Provide troubleshooting steps in a numbered list format. Be concise and clear. E
         raise HTTPException(status_code=502, detail="Internal server error")
 
 @app.post("/api/assign_engineer", response_model=ChatResponse)
-def assign_engineer(req: ChatRequest):
+def assign_engineer(req: ChatRequest, current_user = Depends(get_current_user)):
     """Assign an engineer to the user's issue"""
     try:
         # In a real implementation, this would integrate with a ticketing system
@@ -250,7 +258,7 @@ def assign_engineer(req: ChatRequest):
         raise HTTPException(status_code=500, detail="Failed to assign engineer")
 
 @app.post("/api/feedback", response_model=FeedbackResponse)
-def submit_feedback(req: FeedbackRequest):
+def submit_feedback(req: FeedbackRequest, current_user = Depends(get_current_user)):
     """Submit feedback for a conversation"""
     try:
         # Log feedback to database
@@ -265,7 +273,7 @@ def submit_feedback(req: FeedbackRequest):
         raise HTTPException(status_code=500, detail="Failed to submit feedback")
 
 @app.get("/api/feedback/stats")
-def get_feedback_stats():
+def get_feedback_stats(current_user = Depends(get_current_user)):
     """Get feedback statistics"""
     try:
         stats = db.get_feedback_stats()
