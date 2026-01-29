@@ -1,11 +1,26 @@
 import { useAuth, AuthProvider } from '@/context/AuthContext';
 import { Login } from '@/components/Login';
 import { ChatInterface } from '@/components/ChatInterface';
+import { Signup } from '@/components/Signup';
+import { PasswordReset } from '@/components/PasswordReset';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
 
 function AppContent() {
   const { isAuthenticated } = useAuth();
+  const location = useLocation();
+
+  // Parse query parameters to determine if we're resetting password
+  const queryParams = new URLSearchParams(location.search);
+  const isReset = queryParams.has('token');
 
   if (!isAuthenticated) {
+    if (location.pathname === '/signup') {
+      return <Signup />;
+    }
+    if (location.pathname === '/reset-password' || isReset) {
+      return <PasswordReset />;
+    }
     return <Login />;
   }
 
@@ -15,7 +30,9 @@ function AppContent() {
 const Index = () => {
   return (
     <AuthProvider>
-      <AppContent />
+      <BrowserRouter>
+        <AppContent />
+      </BrowserRouter>
     </AuthProvider>
   );
 };
