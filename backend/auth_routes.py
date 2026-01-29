@@ -1,1 +1,0 @@
-# This file can be removed since we're reverting to the original authentication approach

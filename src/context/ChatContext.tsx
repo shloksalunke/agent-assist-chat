@@ -73,15 +73,13 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     });
   }, [addMessage]);
 
-  // Fetch response from LLM backend with auth
+  // Fetch response from LLM backend
   const fetchLLMResponse = useCallback(async (content: string) => {
     try {
-      const token = localStorage.getItem('authToken');
       const response = await fetch('http://localhost:8000/api/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           message: content,
@@ -121,12 +119,10 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     if (!user) return;
 
     try {
-      const token = localStorage.getItem('authToken');
       const response = await fetch('http://localhost:8000/api/assign_engineer', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           message: 'Assign engineer',
@@ -441,12 +437,10 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     try {
       // Submit feedback to backend using conversation_id from ticket
       if (currentTicket.conversationId) {
-        const token = localStorage.getItem('authToken');
         await fetch('http://localhost:8000/api/feedback', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
           },
           body: JSON.stringify({
             conversation_id: currentTicket.conversationId,
