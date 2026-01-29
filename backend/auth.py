@@ -6,76 +6,48 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from pydantic import BaseModel
 import uuid
-import secrets
 
 # Secret key for JWT signing (in production, use environment variable)
 SECRET_KEY = "your-secret-key-change-in-production"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
-RESET_TOKEN_EXPIRE_MINUTES = 15
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 class Token(BaseModel):
     access_token: str
     token_type: str
-    user_id: str
 
 class TokenData(BaseModel):
-    user_id: Optional[str] = None
+    username: Optional[str] = None
 
-class User(BaseModel):
-    id: str
-    email: str
-    name: str
-    account_number: str
-    plan: str
-    device_os: str
-
-class UserInDB(User):
-    hashed_password: str
-
-# In-memory storage for reset tokens (in production, use Redis or database)
-reset_tokens = {}
-
-# Mock user database (in production, use actual database)
+# Simple user database (in production, use actual database)
 mock_users = {
-    "demo@ispconnect.com": UserInDB(
-        id="user-001",
-        email="demo@ispconnect.com",
-        name="Alex Johnson",
-        account_number="ACC-2024-78456",
-        plan="Premium Fiber 500Mbps",
-        device_os="Windows",
-        hashed_password="$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj/RK.PZvO.S"  # demo123
-    ),
-    "john@example.com": UserInDB(
-        id="user-002",
-        email="john@example.com",
-        name="John Smith",
-        account_number="ACC-2024-12345",
-        plan="Standard Cable 100Mbps",
-        device_os="macOS",
-        hashed_password="$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj/RK.PZvO.S"  # demo123
-    )
+    "demo": {
+        "username": "demo",
+        "full_name": "Demo User",
+        "email": "demo@example.com",
+        "hashed_password": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj/RK.PZvO.S",  # demo123
+        "disabled": False,
+        "account_number": "ACC-2024-78456",
+        "plan": "Premium Fiber 500Mbps",
+        "device_os": "Windows"
+    }
 }
 
-def get_password_hash(password: str) -> str:
-    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-
-def verify_password(plain_password: str, hashed_password: str) -> bool:
+def verify_password(plain_password, hashed_password):
     return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
 
-def get_user(db, email: str):
-    if email in db:
-        return db[email]
+def get_user(db, username: str):
+    if username in db:
+        return db[username]
     return None
 
-def authenticate_user(db, email: str, password: str):
-    user = get_user(db, email)
+def authenticate_user(db, username: str, password: str):
+    user = get_user(db, username)
     if not user:
         return False
-    if not verify_password(password, user.hashed_password):
+    if not verify_password(password, user['hashed_password']):
         return False
     return user
 
@@ -89,28 +61,6 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-def create_reset_token(email: str) -> str:
-    # Generate a random token
-    token = secrets.token_urlsafe(32)
-    # Store with expiration
-    reset_tokens[token] = {
-        "email": email,
-        "expires": datetime.utcnow() + timedelta(minutes=RESET_TOKEN_EXPIRE_MINUTES)
-    }
-    return token
-
-def verify_reset_token(token: str) -> Optional[str]:
-    if token not in reset_tokens:
-        return None
-    
-    token_data = reset_tokens[token]
-    if datetime.utcnow() > token_data["expires"]:
-        # Token expired, remove it
-        del reset_tokens[token]
-        return None
-    
-    return token_data["email"]
-
 async def get_current_user(token: str = Depends(oauth2_scheme)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -119,13 +69,13 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
     )
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id: str = payload.get("sub")
-        if user_id is None:
+        username: str = payload.get("sub")
+        if username is None:
             raise credentials_exception
-        token_data = TokenData(user_id=user_id)
+        token_data = TokenData(username=username)
     except JWTError:
         raise credentials_exception
-    user = get_user(mock_users, token_data.user_id)
+    user = get_user(mock_users, username=token_data.username)
     if user is None:
         raise credentials_exception
     return user

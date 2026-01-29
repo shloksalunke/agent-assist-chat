@@ -6,7 +6,6 @@ import logging
 from typing import Any, List, Dict
 from database import ConversationDB
 from auth import get_current_user, generate_ticket_id
-from auth_routes import auth_router
 
 app = FastAPI(
     title="Local LLM API",
@@ -22,9 +21,6 @@ app.add_middleware(
     allow_methods=["*"],        # POST, OPTIONS sab allow
     allow_headers=["*"],
 )
-
-# Include auth routes
-app.include_router(auth_router)
 
 OLLAMA_URL = "http://localhost:11434/api/generate"
 MODEL_NAME = "mistral4bit"
