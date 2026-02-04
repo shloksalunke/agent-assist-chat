@@ -1,73 +1,101 @@
-# Welcome to your Lovable project
+# Agent Assist Chat
 
-## Project info
+Agent Assist Chat is a Vite + React + TypeScript web application that provides a demo customer-support chat experience with authentication, multi-agent context, and a responsive UI built with shadcn/ui and Tailwind CSS. It is designed as a front-end prototype and uses mock authentication data for local development.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Key features
 
-## How can I edit this code?
+- **Mock authentication flow** with predefined demo users and session initialization.
+- **Multi-agent context** that tracks active agents and conversation history.
+- **Chat-first UI** composed of reusable shadcn/ui components.
+- **Client-side routing** with a 404 fallback.
 
-There are several ways of editing your application.
+## Tech stack
 
-**Use Lovable**
+- **Framework:** React 18 + TypeScript
+- **Build tool:** Vite
+- **Styling:** Tailwind CSS + shadcn/ui
+- **State/data:** React Context + TanStack Query
+- **Testing:** Vitest + Testing Library
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+## Getting started
 
-Changes made via Lovable will be committed automatically to this repo.
+### Prerequisites
 
-**Use your preferred IDE**
+- Node.js 18+ (recommended)
+- npm (or pnpm/yarn)
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+### Install dependencies
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+npm install
+```
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+### Start the development server
 
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+```sh
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The app will be available at `http://localhost:5173` by default.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Demo credentials
 
-**Use GitHub Codespaces**
+Use one of the mock accounts for local testing:
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+- `demo@ispconnect.com` / `demo123`
+- `john@example.com` / `john123`
 
-## What technologies are used for this project?
+These users are stored in the mock authentication map used by the AuthContext.
 
-This project is built with:
+## Available scripts
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+| Script | Description |
+| --- | --- |
+| `npm run dev` | Start the Vite development server |
+| `npm run build` | Build the production bundle |
+| `npm run build:dev` | Build in development mode |
+| `npm run preview` | Preview the production build |
+| `npm run lint` | Run ESLint |
+| `npm run test` | Run Vitest in CI mode |
+| `npm run test:watch` | Run Vitest in watch mode |
 
-## How can I deploy this project?
+## Project structure
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+```
+src/
+  components/   # Shared UI components (shadcn/ui + app-specific)
+  context/      # React Context providers (auth, MCP state)
+  hooks/        # Custom hooks
+  lib/          # Utilities
+  pages/        # Route-level pages
+  services/     # API + data access helpers
+  types/        # TypeScript types
+```
 
-## Can I connect a custom domain to my Lovable project?
+## Authentication and MCP context overview
 
-Yes, you can!
+The app uses a mock authentication system to simulate login and context creation:
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+1. A user logs in with an email/password.
+2. AuthContext validates the user from a local in-memory map.
+3. A new MCP context is created and stored for the session, including a generated session ID, user preferences, and available agents.
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+This behavior is fully client-side and intended for demo purposes.
+
+## Deployment
+
+Build the app and deploy the static output in `dist/` to your preferred hosting provider (Netlify, Vercel, S3, etc.):
+
+```sh
+npm run build
+```
+
+## Notes for project managers
+
+- This repository is a UI prototype; it does **not** include a real backend or persistent storage.
+- Authentication is mocked in the browser and should be replaced with real auth for production use.
+- The MCP context is stored client-side and is intended to demonstrate how agent orchestration could be modeled.
+
+## License
+
+Add your license information here.
